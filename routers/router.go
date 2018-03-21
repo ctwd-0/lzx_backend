@@ -6,7 +6,6 @@ import (
 )
 
 func init() {
-    beego.Router("/", &controllers.MainController{})
     beego.Router("/table/init", &controllers.TableController{})
     beego.Router("/image/get_image", &controllers.ImageController{})
 }
