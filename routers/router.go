@@ -9,4 +9,6 @@ func init() {
     beego.Router("/table/init", &controllers.TableController{})
     beego.Router("/image/get_image", &controllers.ImageController{})
     beego.Router("/search", &controllers.SearchController{})
+    beego.Router("/query/init", &controllers.QueryController{}, "get:InitQuery")
+    beego.Router("/query/add", &controllers.QueryController{}, "post:SaveQuery")
 }
