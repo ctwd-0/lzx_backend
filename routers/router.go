@@ -8,4 +8,5 @@ import (
 func init() {
     beego.Router("/table/init", &controllers.TableController{})
     beego.Router("/image/get_image", &controllers.ImageController{})
+    beego.Router("/search", &controllers.SearchController{})
 }
