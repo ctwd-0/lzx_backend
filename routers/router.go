@@ -13,4 +13,8 @@ func init() {
     beego.Router("/query/add", &controllers.QueryController{}, "post:SaveQuery")
     beego.Router("/query/get", &controllers.QueryController{}, "get:GetQuery")
     beego.Router("/query/delete", &controllers.QueryController{}, "post:DeleteQuery")
+    beego.Router("/filter/init", &controllers.FilterController{}, "get:InitFilter")
+    beego.Router("/filter/update", &controllers.FilterController{}, "get:UpdateFilter")
+    beego.Router("/filter/delete", &controllers.FilterController{}, "get:DeleteFilter")
+    beego.Router("/filter/add", &controllers.FilterController{}, "get:AddFilter")
 }
