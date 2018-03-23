@@ -47,7 +47,7 @@ func (c *QueryController) InitQuery() {
 	c.Data["json"] = getNames()
 }
 
-func (c *QueryController) SaveQuery() {
+func (c *QueryController) AddQuery() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	db := models.S.DB("database")
@@ -64,9 +64,10 @@ func (c *QueryController) SaveQuery() {
 	}
 
 	if reason == "" {
-		var result bson.M
-		err := db.C("query").Find(bson.M{"name":name, "deleted": false}).One(&result)
-		if err == nil && result != nil  {
+		count, err := db.C("query").Find(bson.M{"name":name, "deleted": false}).Count()
+		if err != nil {
+			reason = "数据库错误"
+		} else if count != 0 {
 			reason = "名称重复"
 		}
 	}
