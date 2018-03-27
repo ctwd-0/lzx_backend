@@ -158,3 +158,40 @@ func (c *AdminController) ChangePassword() {
 
 	c.Data["json"] = SimpleReturn(reason)
 }
+
+func (c *AdminController) UpdateUser() {
+	defer c.ServeJSON()
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	db := models.S.DB("database")
+	reason := ""
+	name := c.GetString("name")
+	banned, err_b := c.GetBool("banned")
+	write, err_w := c.GetBool("write")
+
+	if name == "" || err_b != nil || err_w != nil {
+		reason = "参数错误"
+	}
+
+	if reason == "" {
+		reason = userExist(name)
+	}
+
+	if reason == "" {
+		err := db.C("user").Update(bson.M{"name":name, "deleted":false},
+			bson.M{"$set":bson.M{"write":write, "banned": banned}})
+			if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	var users []bson.M
+	if reason == "" {
+		users, reason = allUsers()
+	}
+
+	c.Data["json"] = SimpleReturn(reason)
+	if reason == "" {
+		c.Data["json"].(map[string]interface{})["users"] = users
+	}
+}

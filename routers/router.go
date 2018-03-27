@@ -17,11 +17,11 @@ func init() {
     beego.Router("/filter/update", &controllers.FilterController{}, "get:UpdateFilter")
     beego.Router("/filter/delete", &controllers.FilterController{}, "get:DeleteFilter")
     beego.Router("/filter/add", &controllers.FilterController{}, "get:AddFilter")
-    beego.Router("/user/update", &controllers.UserController{}, "get:UpdateUser")
     beego.Router("/user/login", &controllers.UserController{}, "get:Login")
     beego.Router("/user/logout", &controllers.UserController{}, "get:Logout")
     beego.Router("/admin/add_user", &controllers.AdminController{}, "get:AddUser")
     beego.Router("/admin/init", &controllers.AdminController{}, "get:InitUser")
     beego.Router("/admin/remove_user", &controllers.AdminController{}, "get:DeleteUser")
     beego.Router("/admin/password", &controllers.AdminController{}, "get:ChangePassword")
+    beego.Router("/admin/update", &controllers.AdminController{}, "get:UpdateUser")
 }
