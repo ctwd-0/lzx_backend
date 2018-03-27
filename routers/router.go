@@ -17,4 +17,9 @@ func init() {
     beego.Router("/filter/update", &controllers.FilterController{}, "get:UpdateFilter")
     beego.Router("/filter/delete", &controllers.FilterController{}, "get:DeleteFilter")
     beego.Router("/filter/add", &controllers.FilterController{}, "get:AddFilter")
+    beego.Router("/user/add", &controllers.UserController{}, "get:AddUser")
+    beego.Router("/user/update", &controllers.UserController{}, "get:UpdateUser")
+    beego.Router("/user/password", &controllers.UserController{}, "get:ChangePassword")
+    beego.Router("/user/login", &controllers.UserController{}, "get:Login")
+    beego.Router("/user/logout", &controllers.UserController{}, "get:Logout")
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
+	defer models.S.Close()
 	models.Start_server()
 	beego.Run()
-	defer models.S.Close()
 }

@@ -73,11 +73,12 @@ func (c *QueryController) AddQuery() {
 	}
 
 	if reason == "" {
-		err = db.C("query").Insert(bson.M{"name":name, "query": query, "deleted": false})
+		err := db.C("query").Insert(bson.M{"name":name, "query": query, "deleted": false})
 		if err != nil {
 			reason = "数据库错误"
 		}
 	}
+
 	if reason == "" {
 		m := getNames()
 		if m["success"] == nil {

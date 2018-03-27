@@ -123,14 +123,16 @@ func (c *FilterController) UpdateFilter() {
 	}
 
 	if reason == "" {
-		_, err := db.C("filter").UpdateAll(bson.M{"deleted":false},bson.M{"$set":bson.M{"default":false}})
+		_, err := db.C("filter").UpdateAll(bson.M{"deleted":false},
+			bson.M{"$set":bson.M{"default":false}})
 		if err != nil {
 			reason = "数据库错误"
 		} 
 	}
 
 	if reason == "" {
-		err := db.C("filter").Update(bson.M{"name":name}, bson.M{"$set":bson.M{"default":true, "model":model}})
+		err := db.C("filter").Update(bson.M{"name":name, "deleted": false},
+			bson.M{"$set":bson.M{"default":true, "model":model}})
 		if err != nil {
 			reason = "数据库错误"
 		}
