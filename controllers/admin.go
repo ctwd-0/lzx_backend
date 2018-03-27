@@ -99,6 +99,10 @@ func (c *AdminController) DeleteUser() {
 	db := models.S.DB("database")
 	reason := ""
 	name := c.GetString("name")
+	
+	if c.GetSession("name") != admin_name || c.GetSession("admin") != true {
+		reason = "权限不足"
+	}
 
 	if name == "" || name == admin_name {
 		reason = "参数错误"
@@ -125,4 +129,32 @@ func (c *AdminController) DeleteUser() {
 	if reason == "" {
 		c.Data["json"].(map[string]interface{})["users"] = users
 	}
+}
+
+func (c *AdminController) ChangePassword() {
+	defer c.ServeJSON()
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	db := models.S.DB("database")
+	reason := ""
+	name := c.GetString("name")
+	pass_md5 := c.GetString("password")
+
+	if name == "" || !utils.IsLowerMD5(pass_md5) {
+		reason = "参数错误"
+	}
+
+	if reason == "" {
+		reason = userExist(name)
+	}
+
+	if reason == "" {
+		err := db.C("user").Update(bson.M{"name":name, "deleted":false},
+			bson.M{"$set":bson.M{"password": utils.SaltPassword(pass_md5)}})
+			if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	c.Data["json"] = SimpleReturn(reason)
 }
