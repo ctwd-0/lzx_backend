@@ -8,8 +8,6 @@ import (
 	"github.com/astaxie/beego"
 )
 
-const admin_name = "admin"
-
 type UserController struct {
 	beego.Controller
 }
@@ -34,34 +32,6 @@ func SimpleReturn(reason string) map[string]interface{} {
 		m["reason"] = reason
 	}
 	return m
-}
-
-func (c *UserController) AddUser() {
-	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	db := models.S.DB("database")
-	reason := ""
-	name := c.GetString("name")
-	pass_md5 := c.GetString("password")
-
-	if name == "" || !utils.IsLowerMD5(pass_md5) {
-		reason = "参数错误"
-	}
-
-	if reason == "" {
-		reason = userExist(name)
-	}
-
-	if reason == "" {
-		err := db.C("user").Insert(bson.M{
-			"name":name, "password": utils.SaltPassword(pass_md5),
-			"write": true, "banned": false, "deleted": false})
-		if err != nil {
-			reason = "数据库错误"
-		}
-	}
-
-	c.Data["json"] = SimpleReturn(reason)
 }
 
 func (c *UserController) DeleteUser() {
@@ -156,7 +126,9 @@ func (c *UserController) ChangePassword() {
 
 func (c *UserController) Login() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	
 	db := models.S.DB("database")
 	reason := ""
 	name := c.GetString("name")
