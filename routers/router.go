@@ -23,4 +23,5 @@ func init() {
     beego.Router("/user/logout", &controllers.UserController{}, "get:Logout")
     beego.Router("/admin/add_user", &controllers.AdminController{}, "get:AddUser")
     beego.Router("/admin/init", &controllers.AdminController{}, "get:InitUser")
+    beego.Router("/admin/remove_user", &controllers.AdminController{}, "get:DeleteUser")
 }

@@ -12,13 +12,24 @@ type UserController struct {
 	beego.Controller
 }
 
-func userExist(name string) string {
+func userNotExist(name string) string {
 	db := models.S.DB("database")
 	count, err := db.C("user").Find(bson.M{"name":name, "deleted": false}).Count()
 	if err != nil {
 		return "数据库错误"
 	} else if count != 0 {
 		return "名称重复"
+	}
+	return ""
+}
+
+func userExist(name string) string {
+	db := models.S.DB("database")
+	count, err := db.C("user").Find(bson.M{"name":name, "deleted": false}).Count()
+	if err != nil {
+		return "数据库错误"
+	} else if count == 0 {
+		return "未找到"
 	}
 	return ""
 }
@@ -32,32 +43,6 @@ func SimpleReturn(reason string) map[string]interface{} {
 		m["reason"] = reason
 	}
 	return m
-}
-
-func (c *UserController) DeleteUser() {
-	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	db := models.S.DB("database")
-	reason := ""
-	name := c.GetString("name")
-
-	if name == "" || name == admin_name {
-		reason = "参数错误"
-	}
-
-	if reason == "" {
-		reason = userExist(name)
-	}
-
-	if reason == "" {
-		err := db.C("user").Update(bson.M{"name":name, "deleted":false},
-			bson.M{"$set":bson.M{"deleted":true}})
-			if err != nil {
-			reason = "数据库错误"
-		}
-	}
-
-	c.Data["json"] = SimpleReturn(reason)
 }
 
 func (c *UserController) UpdateUser() {

@@ -13,28 +13,34 @@ type AdminController struct {
 	beego.Controller
 }
 
+func allUsers() ([]bson.M, string) {
+	db := models.S.DB("database")
+	var users []bson.M
+	err := db.C("user").Pipe([]bson.M{
+		{"$match":bson.M{"deleted":false, "name":bson.M{"$ne":admin_name}}},
+		{"$project":bson.M{"_id":0,"name":1,"write":1, "banned":1}},
+	}).All(&users)
+	if err != nil {
+		return []bson.M{}, "数据库错误"
+	} else {
+		return users, ""
+	}
+}
+
 func (c *AdminController) InitUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
-	
-	db := models.S.DB("database")
+	//db := models.S.DB("database")
 	reason := ""
 	
-
 	if c.GetSession("name") != admin_name || c.GetSession("admin") != true {
 		reason = "权限不足"
 	}
 
 	var users []bson.M
 	if reason == "" {
-		err := db.C("user").Pipe([]bson.M{
-			{"$match":bson.M{"deleted":false, "name":bson.M{"$ne":admin_name}}},
-			{"$project":bson.M{"_id":0,"name":1,"write":1, "banned":1}},
-		}).All(&users)
-		if err != nil {
-			reason = "数据库错误"
-		}
+		users, reason = allUsers()
 	}
 	
 	m := SimpleReturn(reason)
@@ -47,7 +53,6 @@ func (c *AdminController) InitUser() {
 
 func (c *AdminController) AddUser() {
 	defer c.ServeJSON()
-	//c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
@@ -64,7 +69,7 @@ func (c *AdminController) AddUser() {
 	}
 
 	if reason == "" {
-		reason = userExist(name)
+		reason = userNotExist(name)
 	}
 
 	if reason == "" {
@@ -75,6 +80,49 @@ func (c *AdminController) AddUser() {
 			reason = "数据库错误"
 		}
 	}
+	
+	var users []bson.M
+	if reason == "" {
+		users, reason = allUsers()
+	}
 
 	c.Data["json"] = SimpleReturn(reason)
+	if reason == "" {
+		c.Data["json"].(map[string]interface{})["users"] = users
+	}
+}
+
+func (c *AdminController) DeleteUser() {
+	defer c.ServeJSON()
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	db := models.S.DB("database")
+	reason := ""
+	name := c.GetString("name")
+
+	if name == "" || name == admin_name {
+		reason = "参数错误"
+	}
+
+	if reason == "" {
+		reason = userExist(name)
+	}
+
+	if reason == "" {
+		err := db.C("user").Update(bson.M{"name":name, "deleted":false},
+			bson.M{"$set":bson.M{"deleted":true}})
+			if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	var users []bson.M
+	if reason == "" {
+		users, reason = allUsers()
+	}
+
+	c.Data["json"] = SimpleReturn(reason)
+	if reason == "" {
+		c.Data["json"].(map[string]interface{})["users"] = users
+	}
 }
