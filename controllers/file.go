@@ -45,7 +45,7 @@ func allFiles(model_id, category string) ([]bson.M, string){
 			"model_id": model_id, "category": category, "deleted": false,
 		}).Select(bson.M{
 			"_id":0,"deleted":0,"original_md5":0,"thumbnail_md5":0,
-		}).All(&data)
+		}).Sort("-created").All(&data)
 	if err != nil {
 		return nil, "数据库错误"
 	} else {

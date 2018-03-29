@@ -10,6 +10,7 @@ import (
 	"os"
 	"io"
 	"fmt"
+	"time"
 	"crypto/md5"
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/utils"
@@ -62,6 +63,7 @@ func InitDbFile(path string) {
 							"original_width": m["thumbnail_x"],
 							"original_height": m["thumbnail_y"],
 							"type": "image",
+							"created": time.Now(),
 							"deleted": false,
 						})
 					}
@@ -169,6 +171,7 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 			"original_height": ori.Bounds().Max.Y,
 			"type": "image",
 			"uuid": uuid.String(),
+			"created": time.Now(),
 			"deleted": false,
 		})
 	}
