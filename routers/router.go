@@ -7,7 +7,7 @@ import (
 
 func init() {
     beego.Router("/table/init", &controllers.TableController{})
-    beego.Router("/image/get_image", &controllers.ImageController{})
+    //beego.Router("/image/get_image", &controllers.ImageController{})
     beego.Router("/search", &controllers.SearchController{})
     beego.Router("/query/init", &controllers.QueryController{}, "get:InitQuery")
     beego.Router("/query/add", &controllers.QueryController{}, "post:AddQuery")
@@ -24,4 +24,7 @@ func init() {
     beego.Router("/admin/remove_user", &controllers.AdminController{}, "get:DeleteUser")
     beego.Router("/admin/password", &controllers.AdminController{}, "get:ChangePassword")
     beego.Router("/admin/update", &controllers.AdminController{}, "get:UpdateUser")
+    beego.Router("/file/upload", &controllers.FileController{}, "post:Upload")
+    beego.Router("/file/upload", &controllers.FileController{}, "options:Options")
+    beego.Router("/file/get_files", &controllers.FileController{}, "get:GetAll")
 }
