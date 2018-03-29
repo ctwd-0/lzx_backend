@@ -117,7 +117,6 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 		thu_temp.Close()
 		os.Remove(thu_temp.Name())
 	}
-	fmt.Println(len(ori_content), " ", len(thu_content))
 
 	if reason == "" {
 		ori_md5 = fmt.Sprintf("%x",md5.Sum(ori_content))
@@ -173,5 +172,4 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 			"deleted": false,
 		})
 	}
-	fmt.Println("reason:", reason)
 }
