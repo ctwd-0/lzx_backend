@@ -9,5 +9,6 @@ import (
 func main() {
 	defer models.S.Close()
 	models.Start_server()
+	//models.InitDbFile("E:/images")
 	beego.Run()
 }

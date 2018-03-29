@@ -4,6 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/models"
+	"github.com/satori/go.uuid"
 )
 
 type FileController struct {
@@ -13,8 +14,22 @@ type FileController struct {
 func (c *FileController) Upload() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	model_id := c.GetString("model_id")
+	category := c.GetString("category")
 
-	c.Data["json"] = bson.M{"success":true}
+	if model_id == "" || category == "" {
+		c.Data["json"] = bson.M{"success":false, "reason": "参数错误"}
+	} else {
+		file, header, _ := c.GetFile("file")
+
+		filename := header.Filename
+
+		uuid, _ := uuid.NewV4()
+
+		go models.ProcessUploadedFile(file, filename, model_id, category, uuid)
+
+		c.Data["json"] = bson.M{"success":true, "token": uuid}
+	}
 }
 
 func (c *FileController) Options() {

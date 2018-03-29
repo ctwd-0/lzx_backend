@@ -11,7 +11,31 @@ import (
 	"io/ioutil"
 	"io"
 	"strings"
+	"mime/multipart"
 )
+
+func ThumbnailFile(file multipart.File, l_ext string) (image.Image, image.Image, string) {
+	var ori_image image.Image
+	var err error
+	reason := ""
+	if l_ext == "jpg" || l_ext == "jpeg" {
+		ori_image, err = jpeg.Decode(file)
+	} else if l_ext == "png" {
+		ori_image, err = png.Decode(file)
+	} else {
+		reason = "不支持的文件格式"
+	}
+	if err != nil {
+		reason = "文件解码错误"
+	}
+
+	var thumbnail image.Image
+	if reason == "" {
+		thumbnail = resize.Thumbnail(1280, 720, ori_image, resize.Lanczos3)
+	}
+
+	return ori_image, thumbnail, reason
+}
 
 func Thumbnail(path string) (map[string]interface{}, string) {
 	reason := ""
@@ -27,29 +51,16 @@ func Thumbnail(path string) (map[string]interface{}, string) {
 		reason = "打开文件失败"
 	}
 
-	var ori_image image.Image
-	err = nil
+	var ori_image, thumbnail image.Image
 	if reason == "" {
-		if l_ext == "jpg" || l_ext == "jpeg" {
-			ori_image, err = jpeg.Decode(file)
-		} else if l_ext == "png" {
-			ori_image, err = png.Decode(file)
-		} else {
-			reason = "不支持的文件格式"
-		}
-		if err != nil {
-			reason = "文件解码错误"
-		}
-		file.Close()
+		ori_image, thumbnail, reason = ThumbnailFile(file, l_ext)
 	}
+	file.Close()
 
 	var thumbnail_path string
-	var thumbnail image.Image
 	if reason == "" {
-		thumbnail = resize.Thumbnail(1280, 720, ori_image, resize.Lanczos3)
 		pos := strings.LastIndex(path, ".")
 		thumbnail_path = path[0:pos] + ".thumbnail." + ext
-		//thumbnail_path = "thumbnail." + ext
 		out, err := os.Create(thumbnail_path)
 		if err != nil {
 			reason = "创建文件失败"
@@ -62,7 +73,7 @@ func Thumbnail(path string) (map[string]interface{}, string) {
 			if err != nil {
 				reason = err.Error()
 			}
-			defer out.Close()
+			out.Close()
 		}
 	}
 
@@ -89,6 +100,11 @@ func Thumbnail(path string) (map[string]interface{}, string) {
 func FileMD5(path string) string {
 	file, _ := os.Open(path)
 	defer file.Close()
+	body, _ := ioutil.ReadAll(file)
+	return fmt.Sprintf("%x",md5.Sum(body))
+}
+
+func FileMD5File(file multipart.File) string {
 	body, _ := ioutil.ReadAll(file)
 	return fmt.Sprintf("%x",md5.Sum(body))
 }
