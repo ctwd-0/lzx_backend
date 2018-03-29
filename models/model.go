@@ -6,8 +6,11 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/utils"
+	"io/ioutil"
+	"strings"
 )
 
+const preprocess_dest_dir = "E:/20170109/building_viewer/dist/files/"
 var S *mgo.Session
 
 func Start_server() {
@@ -184,4 +187,54 @@ func convertData(data []interface{}, header interface{}) [][]string {
 		content = append(content, line)
 	}
 	return content
+}
+
+func InitDbFile(path string) {
+	groups, _ := ioutil.ReadDir(path)
+	db := S.DB("database")
+	c := db.C("file")
+
+	for _, group := range groups {
+		categories, _ := ioutil.ReadDir(path + "/" + group.Name())
+		for _, cat := range categories {
+			files, _ := ioutil.ReadDir(path + "/" + group.Name() + "/" + cat.Name())
+			for _, file := range files {
+				model_id := group.Name()
+				category := cat.Name()
+				file_name := file.Name()
+				path_name := path + "/" + model_id + "/" + category + "/"+ file_name
+				parts := strings.Split(file_name, ".")
+				if parts[len(parts) - 2] == "thumbnail" {
+					continue
+				}
+				fmt.Print(path_name)
+				m, _ := utils.Thumbnail(path_name)
+				if m["success"].(bool) {
+					ext := m["ext"].(string)
+					ori_md5 := utils.FileMD5(path_name)
+					thumbnail_md5 := utils.FileMD5(m["thumbnail_path"].(string))
+					utils.CopyFile(m["ori_path"].(string),
+						preprocess_dest_dir + ori_md5 + "." + ext)
+					utils.CopyFile(m["thumbnail_path"].(string),
+						preprocess_dest_dir + thumbnail_md5 + "." + ext)
+					if m["success"].(bool) {
+						c.Insert(bson.M{
+							"model_id": model_id,
+							"category": category,
+							"original_md5": ori_md5,
+							"thumbnail_md5": thumbnail_md5,
+							"original_saved_as": ori_md5 + "." + ext,
+							"thumbnail_saved_as": thumbnail_md5 + "." + ext,
+							"original_path": "/dist/files/" + ori_md5 + "." + ext,
+							"thumbnail_path": "/dist/files/" + thumbnail_md5 + "." + ext,
+							"original_name": file_name,
+							"type": "image",
+							"deleted": false,
+						})
+					}
+				}
+				fmt.Println(" finished")
+			}
+		}
+	}
 }
