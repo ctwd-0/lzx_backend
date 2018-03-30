@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/satori/go.uuid"
+	"image"
 	"image/jpeg"
 	"image/png"
 	"mime/multipart"
@@ -14,10 +15,11 @@ import (
 	"crypto/md5"
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/utils"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
+
 const preprocess_dest_dir = "E:/20170109/building_viewer/dist/files/"
 const upload_dest_dir = "E:/20170109/building_viewer/dist/uploads/"
-
 
 func InitDbFile(path string) {
 	groups, _ := ioutil.ReadDir(path)
@@ -31,9 +33,9 @@ func InitDbFile(path string) {
 			for _, file := range files {
 				model_id := group.Name()
 				category := cat.Name()
-				file_name := file.Name()
-				path_name := path + "/" + model_id + "/" + category + "/"+ file_name
-				parts := strings.Split(file_name, ".")
+				filename := file.Name()
+				path_name := path + "/" + model_id + "/" + category + "/"+ filename
+				parts := strings.Split(filename, ".")
 				if parts[len(parts) - 2] == "thumbnail" {
 					continue
 				}
@@ -42,30 +44,18 @@ func InitDbFile(path string) {
 				if m["success"].(bool) {
 					ext := m["ext"].(string)
 					ori_md5 := utils.FileMD5(path_name)
-					thumbnail_md5 := utils.FileMD5(m["thumbnail_path"].(string))
+					thu_md5 := utils.FileMD5(m["thumbnail_path"].(string))
+					ori_saved_as := ori_md5 + "." + ext
+					thu_saved_as := thu_md5 + "." + ext
 					utils.CopyFile(m["ori_path"].(string),
 						preprocess_dest_dir + ori_md5 + "." + ext)
 					utils.CopyFile(m["thumbnail_path"].(string),
-						preprocess_dest_dir + thumbnail_md5 + "." + ext)
+						preprocess_dest_dir + thu_md5 + "." + ext)
 					if m["success"].(bool) {
-						c.Insert(bson.M{
-							"model_id": model_id,
-							"category": category,
-							"original_md5": ori_md5,
-							"thumbnail_md5": thumbnail_md5,
-							"original_saved_as": ori_md5 + "." + ext,
-							"thumbnail_saved_as": thumbnail_md5 + "." + ext,
-							"original_path": "/dist/files/" + ori_md5 + "." + ext,
-							"thumbnail_path": "/dist/files/" + thumbnail_md5 + "." + ext,
-							"original_name": file_name,
-							"thumbnail_width": m["thumbnail_x"],
-							"thumbnail_height": m["thumbnail_y"],
-							"original_width": m["thumbnail_x"],
-							"original_height": m["thumbnail_y"],
-							"type": "image",
-							"created": time.Now(),
-							"deleted": false,
-						})
+						m := makeFileDocHelper("/dist/files/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", "", 
+							m["ori_x"].(int), m["ori_y"].(int), m["thu_x"].(int), m["thu_y"].(int))
+						delete(m, "uuid")
+						c.Insert(m)
 					}
 				}
 				fmt.Println(" finished")
@@ -74,10 +64,163 @@ func InitDbFile(path string) {
 	}
 }
 
+func saveFileHelper(ori_content, thu_content []byte, ext, thu_ext string) (ori_md5, thu_md5, ori_saved_as, thu_saved_as, reason string) {
+	reason = ""
+
+	ori_md5 = fmt.Sprintf("%x",md5.Sum(ori_content))
+	ori_saved_as = ori_md5 + "." + ext
+	ori_path := upload_dest_dir + ori_saved_as
+	out_file, err := os.Create(ori_path)
+	if err == nil {
+		_, err = out_file.Write(ori_content)
+		out_file.Close()
+		if err != nil {
+			reason = "原始文件写入失败"
+		}
+	} else {
+		reason = "创建原始文件失败"
+	}
+
+	if reason == "" {
+		thu_md5 = fmt.Sprintf("%x",md5.Sum(thu_content))
+		thu_saved_as = thu_md5 + "." + thu_ext
+		thu_path := upload_dest_dir + thu_saved_as
+		out_file, err := os.Create(thu_path)
+		if err == nil {
+			_, err = out_file.Write(thu_content)
+			out_file.Close()
+			if err != nil {
+				reason = "原始文件写入失败"
+			}
+		} else {
+			reason = "创建原始文件失败"
+		}
+	}
+
+	return
+}
+
+func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, type_name, uuid string, ox, oy, tx, ty int) bson.M {
+	return bson.M{
+		"model_id": model_id,
+		"category": category,
+		"original_md5": ori_md5,
+		"thumbnail_md5": thu_md5,
+		"original_saved_as": ori_saved_as,
+		"thumbnail_saved_as": thu_saved_as,
+		"original_path": prefix + ori_saved_as,
+		"thumbnail_path": prefix + thu_saved_as,
+		"original_name": filename,
+		"original_width": ox,
+		"original_height": oy,
+		"thumbnail_width": tx,
+		"thumbnail_height": ty,
+		"type": type_name,
+		"description": "",
+		"uuid": uuid,
+		"created": time.Now(),
+		"deleted": false,
+	}
+}
+
+func ProcessPdf(file multipart.File, filename string, model_id string, category string, uuid uuid.UUID) {
+	name_parts := strings.Split(filename, ".")
+	ext := name_parts[len(name_parts) - 1]
+
+	imagick.Initialize()
+	defer imagick.Terminate()
+	mw := imagick.NewMagickWand()
+	defer mw.Destroy()
+	reason := ""
+	var err error
+	var thu_temp *os.File
+
+	var ori_content, thu_content []byte
+	var ori_md5, thu_md5, ori_saved_as, thu_saved_as string
+	ori_content, err = ioutil.ReadAll(file)
+	if err != nil {
+		reason = "读取上传文件失败"
+	}
+
+	if reason == "" {
+		err = mw.ReadImageBlob(ori_content)
+		if err != nil {
+			reason = "文件解码失败"
+		}
+	}
+
+	var thu_temp_name string
+	if reason == "" {
+		thu_temp, err = ioutil.TempFile("", "mw_temp")
+		if err != nil {
+			reason = "创建临时文件失败"
+		} else {
+			thu_temp_name = thu_temp.Name() + ".png"
+			thu_temp.Close()
+			os.Remove(thu_temp.Name())
+			os.Remove(thu_temp_name)
+		}
+	}
+	
+	if mw.GetNumberImages() == 0 {
+		reason = "文档为空"
+	}
+
+	if reason == "" {
+		mw.SetIteratorIndex(0)
+		err = mw.WriteImage(thu_temp.Name() + ".png")
+		if err != nil {
+			reason = "写入缩略图失败"
+		}
+	}
+
+	if reason == "" {
+		thu_content, err = ioutil.ReadFile(thu_temp.Name() + ".png")
+		if err != nil {
+			reason = "读取缩略图失败"
+		}
+	}
+
+	if reason == "" {
+		thu_temp, err = os.Open(thu_temp_name)
+		if err != nil {
+			reason = "打开临时缩略图文件失败"
+		}
+	}
+
+ 	if reason == "" {
+		ori_md5, thu_md5, ori_saved_as, thu_saved_as, reason = saveFileHelper(ori_content, thu_content, ext, "png")
+	}
+
+	var thu image.Image
+	if reason == "" {
+		thu_temp.Seek(0,io.SeekStart)
+		thu, err = png.Decode(thu_temp)
+		if err != nil {
+			reason = "缩略图解码失败"
+		}
+	}
+
+	if reason == "" {
+		db := S.DB("database")
+		c := db.C("file")
+		tm := thu.Bounds().Max
+		m := makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "pdf", uuid.String(), tm.X, tm.Y, tm.X, tm.Y)
+		delete(m, "original_width")
+		delete(m, "original_height")
+		c.Insert(m)
+	}
+}
+
 func ProcessUploadedFile(file multipart.File, filename string, model_id string, category string, uuid uuid.UUID) {
 	name_parts := strings.Split(filename, ".")
 	ext := name_parts[len(name_parts) - 1]
 	l_ext := strings.ToLower(ext)
+	
+	if l_ext == "pdf" {
+		ProcessPdf(file, filename, model_id, category, uuid)
+		return
+	}
 
 	ori, thu, reason := utils.ThumbnailFile(file, l_ext)
 
@@ -89,6 +232,7 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 			reason = "创建临时文件失败"
 		}
 	}
+
 	if reason == "" {
 		if l_ext == "jpg" || l_ext == "jpeg" {
 			err = jpeg.Encode(thu_temp, thu, &jpeg.Options{100})
@@ -101,7 +245,7 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 	}
 
 	var ori_content, thu_content []byte
-	var ori_md5, thu_md5, ori_saved_as, thu_saved_as, ori_path, thu_path string
+	var ori_md5, thu_md5, ori_saved_as, thu_saved_as string
 	if reason == "" {
 		file.Seek(0,io.SeekStart)
 		ori_content, err = ioutil.ReadAll(file)
@@ -120,59 +264,16 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 		os.Remove(thu_temp.Name())
 	}
 
-	if reason == "" {
-		ori_md5 = fmt.Sprintf("%x",md5.Sum(ori_content))
-		ori_saved_as = ori_md5 + "." + ext
-		ori_path = upload_dest_dir + ori_saved_as
-		out_file, err := os.Create(ori_path)
-		if err == nil {
-			_, err = out_file.Write(ori_content)
-			out_file.Close()
-			if err != nil {
-				reason = "原始文件写入失败"
-			}
-		} else {
-			reason = "创建原始文件失败"
-		}
-	}
-
-	if reason == "" {
-		thu_md5 = fmt.Sprintf("%x",md5.Sum(thu_content))
-		thu_saved_as = thu_md5 + "." + ext
-		thu_path = upload_dest_dir + thu_saved_as
-		out_file, err := os.Create(thu_path)
-		if err == nil {
-			_, err = out_file.Write(thu_content)
-			out_file.Close()
-			if err != nil {
-				reason = "原始文件写入失败"
-			}
-		} else {
-			reason = "创建原始文件失败"
-		}
+ 	if reason == "" {
+		ori_md5, thu_md5, ori_saved_as, thu_saved_as, reason = saveFileHelper(ori_content, thu_content, ext, "png")
 	}
 
 	if reason == "" {
 		db := S.DB("database")
 		c := db.C("file")
-		c.Insert(bson.M{
-			"model_id": model_id,
-			"category": category,
-			"original_md5": ori_md5,
-			"thumbnail_md5": thu_md5,
-			"original_saved_as": ori_saved_as,
-			"thumbnail_saved_as": thu_saved_as,
-			"original_path": "/dist/uploads/" + ori_saved_as,
-			"thumbnail_path": "/dist/uploads/" + thu_saved_as,
-			"original_name": filename,
-			"thumbnail_width": thu.Bounds().Max.X,
-			"thumbnail_height": thu.Bounds().Max.Y,
-			"original_width": ori.Bounds().Max.X,
-			"original_height": ori.Bounds().Max.Y,
-			"type": "image",
-			"uuid": uuid.String(),
-			"created": time.Now(),
-			"deleted": false,
-		})
+		tm := thu.Bounds().Max
+		om := ori.Bounds().Max
+		m := makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", uuid.String(), om.X, om.Y, tm.X, tm.Y)
+		c.Insert(m)
 	}
 }

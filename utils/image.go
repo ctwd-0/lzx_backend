@@ -86,8 +86,8 @@ func Thumbnail(path string) (map[string]interface{}, string) {
 		m["ori_y"] = ori_image.Bounds().Max.Y
 		m["thumbnail_size"] = thumbnail.Bounds().Max
 		m["thumbnail_path"] = thumbnail_path
-		m["thumbnail_x"] = thumbnail.Bounds().Max.X
-		m["thumbnail_y"] = thumbnail.Bounds().Max.Y
+		m["thu_x"] = thumbnail.Bounds().Max.X
+		m["thu_y"] = thumbnail.Bounds().Max.Y
 		//m["thumbnail"] = thumbnail
 		m["ext"] = ext
 	} else {
