@@ -32,6 +32,34 @@ func (c *FileController) Upload() {
 	}
 }
 
+func (c *FileController) Update() {
+	defer c.ServeJSON()
+	db := models.S.DB("database")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	reason := ""
+	id_hex := c.GetString("id")
+	description := c.GetString("description")
+
+	if description == "" || !bson.IsObjectIdHex(id_hex) {
+		reason = "参数错误"
+	}
+
+	if reason == "" {
+		err := db.C("file").UpdateId(bson.ObjectIdHex(id_hex), bson.M{
+			"$set":bson.M{"description":description},
+		})
+		if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	if reason == "" {
+		c.Data["json"] = bson.M{"success":true}
+	} else {
+		c.Data["json"] = bson.M{"success":false, "reason": "参数错误"}
+	}
+}
+
 func (c *FileController) Options() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
@@ -44,7 +72,8 @@ func allFiles(model_id, category string) ([]bson.M, string){
 	err := db.C("file").Find(bson.M{
 			"model_id": model_id, "category": category, "deleted": false,
 		}).Select(bson.M{
-			"_id":0,"deleted":0,"original_md5":0,"thumbnail_md5":0,
+			"deleted":0,"created":0,"uuid":0,
+			"original_md5":0,"thumbnail_md5":0,"thumbnail_saved_as":0,"original_saved_as":0,
 		}).Sort("-created").All(&data)
 	if err != nil {
 		return nil, "数据库错误"

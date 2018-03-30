@@ -28,4 +28,5 @@ func init() {
     beego.Router("/file/upload", &controllers.FileController{}, "options:Options")
     beego.Router("/file/get_files", &controllers.FileController{}, "get:GetAll")
     beego.Router("/file/is_ready", &controllers.FileController{}, "get:Ready")
+    beego.Router("/file/update_description", &controllers.FileController{}, "post:Update")
 }
