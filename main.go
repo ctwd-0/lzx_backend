@@ -10,5 +10,6 @@ func main() {
 	defer models.S.Close()
 	models.Start_server()
 	//models.InitDbFile("E:/images")
+	//models.InitDbTable("E:/20170109/数据表.csv")
 	beego.Run()
 }
