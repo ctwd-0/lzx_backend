@@ -18,7 +18,7 @@ func pureHeaders() ([]string, error) {
 		return []string{}, err
 	} else {
 		header := []string{}
-		for _, val := range hds {
+		for _, val := range hds[0] {
 			if val == "构件编号（表单中显示）" {
 				header = append(header, "构件编号")
 			} else if val != "模型编号（rhino中对应编号，表单中表头、值均不显示）" && val != "模型编号" {

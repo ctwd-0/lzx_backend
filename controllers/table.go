@@ -18,15 +18,15 @@ func (c *TableController) InitTable() {
 	c.Data["json"] = models.GetAllData()
 }
 
-func updateColumn(new_header []string, author string) string{
+func updateColumn(new_header [][]string, author string) string{
 	db := models.S.DB("database")
-
+	data := stringToData(new_header)
 	var r bson.M
 	iter := db.C("column").Find(nil).Iter()
 	for iter.Next(&r) {
 		err := db.C("column").UpdateId(r["_id"], bson.M{
 			"$push":bson.M{"old":bson.M{"value":r["value"],"modified":r["modified"],"author":r["author"]}},
-			"$set":bson.M{"value": new_header, "modified":time.Now(), "author": author},
+			"$set":bson.M{"value": data, "modified":time.Now(), "author": author},
 		})
 		if err != nil {
 			return "更新表头失败"
@@ -43,15 +43,16 @@ func removeColumn(column_name, author string) string {
 		reason = "获取表头失败"
 	}
 
-	new_header := []string{}
+	new_header := [][]string{[]string{},[]string{}}
 	if reason == "" {
-		for _, value := range header {
+		for idx, value := range header[0] {
 			if value != column_name {
-				new_header = append(new_header, value)
+				new_header[0] = append(new_header[0], value)
+				new_header[1] = append(new_header[1], header[1][idx])
 			}
 		}
 		if len(new_header) == len(header) {
-			reason = "不存在的列"
+			reason = "不存在的列名称"
 		}
 	}
 
@@ -71,7 +72,7 @@ func addColumn(column_name, author string) string {
 	}
 
 	if reason == "" {
-		for _, val := range header {
+		for _, val := range header[0] {
 			if val == column_name {
 				reason = "重复的列"
 				break
@@ -80,7 +81,9 @@ func addColumn(column_name, author string) string {
 	}
 
 	if reason == "" {
-		reason = updateColumn(append(header, column_name), author)
+		header[0] = append(header[0], column_name)
+		header[1] = append(header[1], bson.NewObjectId().Hex())
+		reason = updateColumn(header, author)
 	}
 
 	return reason
@@ -97,7 +100,7 @@ func renameColumn(old_column_name, new_column_name, author string) string {
 	index := -1
 	exist := false
 	if reason == "" {
-		for idx, val := range header {
+		for idx, val := range header[0] {
 			if val == old_column_name {
 				index = idx
 			} else if val == new_column_name {
@@ -109,7 +112,7 @@ func renameColumn(old_column_name, new_column_name, author string) string {
 		} else if exist{ 
 			reason = "重复的名字"
 		} else {
-			header[index] = new_column_name
+			header[0][index] = new_column_name
 		}
 	}
 	
@@ -174,7 +177,6 @@ func (c *TableController) AddColumn() {
 
 func (c *TableController) RenameColumn() {
 	defer c.ServeJSON()
-	db := models.S.DB("database")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	reason := ""
 	new_column_name := c.GetString("new")
@@ -186,21 +188,6 @@ func (c *TableController) RenameColumn() {
 	
 	if reason == "" {
 		reason = renameColumn(old_column_name, new_column_name, author)
-	}
-
-	if reason == "" {
-		var r bson.M
-		iter := db.C("table").Find(bson.M{old_column_name:bson.M{"$exists": true}}).Select(bson.M{old_column_name:1}).Iter()
-		for iter.Next(&r) {
-			err := db.C("table").UpdateId(r["_id"],bson.M{
-				"$set":bson.M{new_column_name:r[old_column_name]},
-				"$unset":bson.M{old_column_name:""},
-			})
-			if err != nil {
-				reason = "更新列名失败(数据库可能不一致)"
-			}
-		}
-
 	}
 
 	if reason == "" {
@@ -223,15 +210,17 @@ func (c *TableController) UpdateValue() {
 		reason = "参数错误"
 	}
 
+	var column_id string
 	if reason == "" {
 		header, _, err := models.GetDataHeaderAndSelector()
 		if err != nil {
 			reason = "获取表头失败"
 		} else {
 			reason = "不存在的列"
-			for _, val := range header {
+			for idx, val := range header[0] {
 				if val == column_name {
 					reason = ""
+					column_id = header[1][idx]
 					break
 				}
 			}
@@ -245,15 +234,15 @@ func (c *TableController) UpdateValue() {
 			reason = "查找失败"
 		} else {
 			err = db.C("table").UpdateId(r["_id"], bson.M{
-				"$push":bson.M{column_name + ".old": bson.M{
-					"value":r[column_name].(bson.M)["value"],
-					"modified":r[column_name].(bson.M)["modified"],
-					"author":r[column_name].(bson.M)["author"],
+				"$push":bson.M{column_id + ".old": bson.M{
+					"value":r[column_id].(bson.M)["value"],
+					"modified":r[column_id].(bson.M)["modified"],
+					"author":r[column_id].(bson.M)["author"],
 				}},
 				"$set":bson.M{
-					column_name+".value": value,
-					column_name+".modified":time.Now(),
-					column_name+".author": author,
+					column_id+".value": value,
+					column_id+".modified":time.Now(),
+					column_id+".author": author,
 				},
 			})
 			if err != nil {

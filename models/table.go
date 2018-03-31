@@ -32,8 +32,12 @@ func InitDbTable(path string) {
 		parts := strings.Split(str, "\r\n")
 		headers := strings.Split(parts[0], ",")
 		contents := parts[1:]
+		hdkv := []bson.M{}
+		for _, val := range headers{
+			hdkv = append(hdkv, bson.M{"val":val,"key":bson.NewObjectId()})
+		}
 		db.C("column").Insert(bson.M{
-			"value": headers,
+			"value": hdkv,
 			"author": "system_init",
 			"modified": time.Now(),
 			"old": []bson.M{},
@@ -46,7 +50,7 @@ func InitDbTable(path string) {
 			m["deleted"] = false
 			if len(vals) == len(headers) {
 				for index, value := range vals {
-					m[headers[index]] = bson.M{
+					m[hdkv[index]["key"].(bson.ObjectId).Hex()] = bson.M{
 						"value": value,
 						"modified": time.Now(),
 						"author": "system_init",
@@ -71,28 +75,33 @@ func GetDataWithIDs(ids []bson.ObjectId) map[string]interface{} {
 	m := make(map[string]interface{})
 	if err != nil {
 		m["success"] = false
-		m["reason"] = "db error"
+		m["reason"] = "数据库错误"
 	} else {
-		content := convertData(data, header)
-		m["header"] = header
+		content, ids := convertData(data, header)
+		m["header"] = header[0]
 		m["content"] = content
+		m["ids"] = ids
 	}
 	return m
 }
 
-func GetDataHeaderAndSelector() ([]string, bson.M, error) {
+func GetDataHeaderAndSelector() ([][]string, bson.M, error) {
 	db := S.DB("database")
 	var header bson.M
 	err := db.C("column").Find(bson.M{}).Select(bson.M{"_id":0,"value":1}).One(&header)
 	if err == nil {
 		selector := bson.M{}
-		selector["_id"] = 0
-		h := []string{}
+		//selector["_id"] = 0
+		hds := [][]string{[]string{}, []string{}}
 		for _, value := range header["value"].([]interface{}) {
-			h = append(h, value.(string) )
-		 	selector[value.(string) + ".old"] = 0
+			v := value.(bson.M)
+			key := v["key"].(bson.ObjectId).Hex()
+			val := v["val"].(string)
+			hds[0] = append(hds[0], val)
+			hds[1] = append(hds[1], key)
+		 	selector[val + ".old"] = 0
 		}
-		return h, selector, nil
+		return hds, selector, nil
 	} else {
 		return nil, nil, err
 	}
@@ -112,29 +121,32 @@ func GetAllData() map[string]interface{} {
 
 	if err != nil {
 		m["success"] = false
-		m["reason"] = "db error"
+		m["reason"] = "数据库错误"
 	} else {
 		fmt.Println(time.Now())
-		content := convertData(data, header)
+		content, ids := convertData(data, header)
 		fmt.Println(time.Now())
-		m["header"] = header
+		m["header"] = header[0]
 		m["content"] = content
+		m["ids"] = ids
 	}
 	return m
 }
 
-func convertData(data []bson.M, headers []string) [][]string {
-	content := make([][]string, 0)
-	for _, value := range data {
-		var line []string
-		for _, header := range headers {
+func convertData(data []bson.M, headers [][]string) ([][]string, []string) {
+	content := make([][]string, len(data))
+	ids := make([]string, len(data))
+	for line_no, value := range data {
+		line := make([]string,len(headers[1]))
+		for idx, header := range headers[1] {
 			var v string
 			if m, ok := value[header].(bson.M); ok {
 				v = m["value"].(string)
 			}
-			line = append(line, v)
+			line[idx] = v
 		}
-		content = append(content, line)
+		content[line_no] = line
+		ids[line_no] = value["_id"].(bson.ObjectId).Hex()
 	}
-	return content
+	return content, ids
 }
