@@ -128,7 +128,11 @@ func convertData(data []bson.M, headers []string) [][]string {
 	for _, value := range data {
 		var line []string
 		for _, header := range headers {
-			line = append(line, value[header].(bson.M)["value"].(string))
+			var v string
+			if m, ok := value[header].(bson.M); ok {
+				v = m["value"].(string)
+			}
+			line = append(line, v)
 		}
 		content = append(content, line)
 	}
