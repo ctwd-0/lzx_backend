@@ -4,11 +4,25 @@ import (
 	"github.com/astaxie/beego"
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/models"
+	"lzx_backend/utils"
 	"time"
 )
 
 type FolderController struct {
 	beego.Controller
+}
+
+func returnFolders(model_id, reason string) bson.M {
+	var folders [][]string
+	if reason == "" {
+		folders, reason = models.GetFolders(model_id)
+	}
+
+	if reason == "" {
+		return bson.M{"success":true, "folders": folders[0]}
+	} else {
+		return bson.M{"success":false, "reason": reason}
+	}
 }
 
 func (c *FolderController) GetFolders() {
@@ -20,16 +34,7 @@ func (c *FolderController) GetFolders() {
 		reason = "参数错误"
 	}
 
-	var folders [][]string
-	if reason == "" {
-		folders, reason = models.GetFolders(model_id)
-	}
-
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true, "folders": folders[0]}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason": reason}
-	}
+	c.Data["json"] = returnFolders(model_id, reason)
 }
 
 func (c *FolderController) RenameFolder() {
@@ -48,11 +53,7 @@ func (c *FolderController) RenameFolder() {
 		reason = renameFolder(old_folder_name, new_folder_name, model_id, author)
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
+	c.Data["json"] = returnFolders(model_id, reason)
 }
 
 func (c *FolderController) RemoveFolderAndMove() {
@@ -80,11 +81,7 @@ func (c *FolderController) RemoveFolderAndMove() {
 		}
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
+	c.Data["json"] = returnFolders(model_id, reason)
 }
 
 func (c *FolderController) AddFolder() {
@@ -102,19 +99,7 @@ func (c *FolderController) AddFolder() {
 		reason = addFolder(folder_name, model_id, author)
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
-}
-
-func stringToData(new_folder [][]string) []bson.M {
-	data := []bson.M{}
-	for idx, val := range new_folder[0] {
-		data = append(data, bson.M{"val":val,"key":bson.ObjectIdHex(new_folder[1][idx])})
-	}
-	return data
+	c.Data["json"] = returnFolders(model_id, reason)
 }
 
 func addFolder(folder_name, model_id, author string) string {
@@ -202,7 +187,7 @@ func updateFolder(new_folder [][]string, model_id, author string) string {
 	var r bson.M
 	err := db.C("folder").Find(bson.M{"model_id":model_id}).One(&r)
 	if err == nil {
-		data := stringToData(new_folder)
+		data := utils.StringToData(new_folder)
 		err := db.C("folder").UpdateId(r["_id"], bson.M{
 			"$push":bson.M{"old":bson.M{"folders":r["folders"],"modified":r["modified"],"author":r["author"]}},
 			"$set":bson.M{"folders": data, "modified":time.Now(), "author": author},

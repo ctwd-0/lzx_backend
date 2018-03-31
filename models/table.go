@@ -85,6 +85,22 @@ func GetDataWithIDs(ids []bson.ObjectId) map[string]interface{} {
 	return m
 }
 
+func GetDataHeader() ([]string, string) {
+	db := S.DB("database")
+	var header bson.M
+	err := db.C("column").Find(bson.M{}).Select(bson.M{"_id":0,"value":1}).One(&header)
+	if err == nil {
+		hds := []string{}
+		for _, value := range header["value"].([]interface{}) {
+			val := value.(bson.M)["val"].(string)
+			hds = append(hds, val)
+		}
+		return hds, ""
+	} else {
+		return []string{}, "数据库错误"
+	}
+}
+
 func GetDataHeaderAndSelector() ([][]string, bson.M, error) {
 	db := S.DB("database")
 	var header bson.M

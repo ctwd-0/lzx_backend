@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/astaxie/beego"
 	"lzx_backend/models"
+	"lzx_backend/utils"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
@@ -20,7 +21,7 @@ func (c *TableController) InitTable() {
 
 func updateColumn(new_header [][]string, author string) string{
 	db := models.S.DB("database")
-	data := stringToData(new_header)
+	data := utils.StringToData(new_header)
 	var r bson.M
 	iter := db.C("column").Find(nil).Iter()
 	for iter.Next(&r) {
@@ -123,6 +124,19 @@ func renameColumn(old_column_name, new_column_name, author string) string {
 	return reason
 }
 
+func returnHeader(reason string) bson.M {
+	header := []string{}
+	if reason == "" {
+		header, reason = models.GetDataHeader()
+	}
+
+	if reason == "" {
+		return bson.M{"success":true, "header": header}
+	} else {
+		return bson.M{"success":false, "reason": reason}
+	}
+}
+
 func (c *TableController) RemoveColumn() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
@@ -137,11 +151,7 @@ func (c *TableController) RemoveColumn() {
 		reason = removeColumn(column_name, author)
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
+	c.Data["json"] = returnHeader(reason)
 }
 
 func (c *TableController) AddColumn() {
@@ -168,11 +178,7 @@ func (c *TableController) AddColumn() {
 		}
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
+	c.Data["json"] = returnHeader(reason)
 }
 
 func (c *TableController) RenameColumn() {
@@ -190,11 +196,7 @@ func (c *TableController) RenameColumn() {
 		reason = renameColumn(old_column_name, new_column_name, author)
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason":reason}
-	}
+	c.Data["json"] = returnHeader(reason)
 }
 
 func (c *TableController) UpdateValue() {
@@ -250,6 +252,7 @@ func (c *TableController) UpdateValue() {
 			}
 		}
 	}
+
 	if reason == "" {
 		c.Data["json"] = bson.M{"success":true}
 	} else {
