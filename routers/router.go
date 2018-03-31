@@ -6,7 +6,11 @@ import (
 )
 
 func init() {
-    beego.Router("/table/init", &controllers.TableController{})
+    beego.Router("/table/init", &controllers.TableController{}, "get:InitTable")
+    beego.Router("/table/update", &controllers.TableController{}, "get:UpdateValue")
+    beego.Router("/table/add_column", &controllers.TableController{}, "get:AddColumn")
+    beego.Router("/table/remove_column", &controllers.TableController{}, "get:RemoveColumn")
+    beego.Router("/table/rename_column", &controllers.TableController{}, "get:RenameColumn")
     //beego.Router("/image/get_image", &controllers.ImageController{})
     beego.Router("/search", &controllers.SearchController{})
     beego.Router("/query/init", &controllers.QueryController{}, "get:InitQuery")
