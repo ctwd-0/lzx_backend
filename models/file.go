@@ -52,10 +52,15 @@ func InitDbFile(path string) {
 					utils.CopyFile(m["thumbnail_path"].(string),
 						preprocess_dest_dir + thu_md5 + "." + ext)
 					if m["success"].(bool) {
-						m := makeFileDocHelper("/dist/files/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", "", 
+						mm, reason := makeFileDocHelper("/dist/files/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", "", 
 							m["ori_x"].(int), m["ori_y"].(int), m["thu_x"].(int), m["thu_y"].(int))
-						delete(m, "uuid")
-						c.Insert(m)
+						if reason == "" {
+							delete(mm, "uuid")
+							c.Insert(mm)
+						} else {
+							fmt.Println(" error")
+							fmt.Println(reason)
+						}
 					}
 				}
 				fmt.Println(" finished")
@@ -100,10 +105,11 @@ func saveFileHelper(ori_content, thu_content []byte, ext, thu_ext string) (ori_m
 	return
 }
 
-func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, type_name, uuid string, ox, oy, tx, ty int) bson.M {
+func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, type_name, uuid string, ox, oy, tx, ty int) (bson.M, string) {
+	category_id, reason := ConvertName(model_id, category)
 	return bson.M{
 		"model_id": model_id,
-		"category": category,
+		"category": category_id,
 		"original_md5": ori_md5,
 		"thumbnail_md5": thu_md5,
 		"original_saved_as": ori_saved_as,
@@ -120,7 +126,7 @@ func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_a
 		"uuid": uuid,
 		"created": time.Now(),
 		"deleted": false,
-	}
+	}, reason
 }
 
 func ProcessPdf(file multipart.File, filename string, model_id string, category string, uuid uuid.UUID) {
@@ -201,11 +207,13 @@ func ProcessPdf(file multipart.File, filename string, model_id string, category 
 		}
 	}
 
+	var m bson.M
 	if reason == "" {
-		db := S.DB("database")
-		c := db.C("file")
 		tm := thu.Bounds().Max
-		m := makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "pdf", uuid.String(), tm.X, tm.Y, tm.X, tm.Y)
+		m, reason = makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "pdf", uuid.String(), tm.X, tm.Y, tm.X, tm.Y)
+	}
+	if reason == "" {
+		c := S.DB("database").C("file")
 		delete(m, "original_width")
 		delete(m, "original_height")
 		c.Insert(m)
@@ -268,12 +276,16 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 		ori_md5, thu_md5, ori_saved_as, thu_saved_as, reason = saveFileHelper(ori_content, thu_content, ext, "png")
 	}
 
+	var m bson.M
 	if reason == "" {
-		db := S.DB("database")
-		c := db.C("file")
+
 		tm := thu.Bounds().Max
 		om := ori.Bounds().Max
-		m := makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", uuid.String(), om.X, om.Y, tm.X, tm.Y)
+		m, reason = makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", uuid.String(), om.X, om.Y, tm.X, tm.Y)
+
+	}
+	if reason == "" {
+		c :=  S.DB("database").C("file")
 		c.Insert(m)
 	}
 }

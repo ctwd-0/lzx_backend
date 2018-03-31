@@ -50,3 +50,17 @@ func GetFolders(model_id string) ([][]string, string) {
 		return [][]string{}, "数据库错误"
 	}
 }
+
+func ConvertName(model_id, folder_name string) (string, string) {
+	folders, reason := GetFolders(model_id)
+
+	if reason == "" {
+		for idx, val := range folders[0] {
+			if val == folder_name {
+				return folders[1][idx], ""
+			}
+		}
+		return "", "不存在的类别"
+	}
+	return "", reason
+}
