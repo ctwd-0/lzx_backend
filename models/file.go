@@ -289,3 +289,22 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 		c.Insert(m)
 	}
 }
+
+func AllFiles(model_id, category string) ([]bson.M, string){
+	db := S.DB("database")
+	category_id, reason := ConvertName(model_id, category)
+
+	data:= []bson.M{}
+	if reason == "" {
+		err := db.C("file").Find(bson.M{
+			"model_id": model_id, "category": category_id, "deleted": false,
+		}).Select(bson.M{
+			"deleted":0,"created":0,"uuid":0,
+			"original_md5":0,"thumbnail_md5":0,"thumbnail_saved_as":0,"original_saved_as":0,
+		}).Sort("-created").All(&data)
+		if err != nil {
+			reason = "数据库错误"
+		}
+	}
+	return data, reason
+}

@@ -127,11 +127,9 @@ func GetAllData() map[string]interface{} {
 	db := S.DB("database")
 	header, selector, err := GetDataHeaderAndSelector()
 	var data []bson.M
-	fmt.Println(time.Now())
 	if err == nil {
 		err = db.C("table").Find(bson.M{"deleted": false}).Select(selector).All(&data)
 	}
-	fmt.Println(time.Now())
 
 	m := make(map[string]interface{})
 
@@ -139,9 +137,7 @@ func GetAllData() map[string]interface{} {
 		m["success"] = false
 		m["reason"] = "数据库错误"
 	} else {
-		fmt.Println(time.Now())
 		content, ids := convertData(data, header)
-		fmt.Println(time.Now())
 		m["header"] = header[0]
 		m["content"] = content
 		m["ids"] = ids

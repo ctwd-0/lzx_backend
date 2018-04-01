@@ -19,7 +19,7 @@ func (c *TableController) InitTable() {
 	c.Data["json"] = models.GetAllData()
 }
 
-func updateColumn(new_header [][]string, author string) string{
+func updateColumn(new_header [][]string, author string) string {
 	db := models.S.DB("database")
 	data := utils.StringToData(new_header)
 	var r bson.M
@@ -46,6 +46,9 @@ func removeColumn(column_name, author string) string {
 
 	new_header := [][]string{[]string{},[]string{}}
 	if reason == "" {
+		if len(header[0]) == 1 {
+			return "不能删除最后一列"
+		}
 		for idx, value := range header[0] {
 			if value != column_name {
 				new_header[0] = append(new_header[0], value)
@@ -146,6 +149,12 @@ func (c *TableController) RemoveColumn() {
 	if column_name == "" {
 		reason = "参数错误"
 	}
+
+	if reason == "" {
+		if column_name == "构件编号" {
+			reason = "不能删除构件编号列"
+		}
+	}
 	
 	if reason == "" {
 		reason = removeColumn(column_name, author)
@@ -192,6 +201,12 @@ func (c *TableController) RenameColumn() {
 		reason = "参数错误"
 	}
 	
+	if reason == "" {
+		if old_column_name == "构件编号" {
+			reason = "不能重命名构件编号列"
+		}
+	}
+
 	if reason == "" {
 		reason = renameColumn(old_column_name, new_column_name, author)
 	}

@@ -17,9 +17,13 @@ func returnFolders(model_id, reason string) bson.M {
 	if reason == "" {
 		folders, reason = models.GetFolders(model_id)
 	}
+	var files []bson.M
+	if reason == "" {
+		files, reason = models.AllFiles(model_id, folders[0][0])
+	}
 
 	if reason == "" {
-		return bson.M{"success":true, "folders": folders[0]}
+		return bson.M{"success":true, "folders": folders[0], "files": files}
 	} else {
 		return bson.M{"success":false, "reason": reason}
 	}
@@ -126,6 +130,9 @@ func removeFolder(old_folder_name, new_folder_name, model_id, author string) (st
 	var old_id, new_id string
 	folder, reason := models.GetFolders(model_id)
 	if reason == "" {
+		if len(folder[0]) == 1 {
+			return "", "" , "不能删除最后一个选项"
+		}
 		new_folder := [][]string{[]string{}, []string{}}
 		for idx, val := range folder[0] {
 			if val == old_folder_name {

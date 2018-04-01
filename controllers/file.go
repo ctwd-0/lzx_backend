@@ -66,25 +66,6 @@ func (c *FileController) Options() {
 	c.Data["json"] = bson.M{"success":true}
 }
 
-func allFiles(model_id, category string) ([]bson.M, string){
-	db := models.S.DB("database")
-	category_id, reason := models.ConvertName(model_id, category)
-
-	data:= []bson.M{}
-	if reason == "" {
-		err := db.C("file").Find(bson.M{
-			"model_id": model_id, "category": category_id, "deleted": false,
-		}).Select(bson.M{
-			"deleted":0,"created":0,"uuid":0,
-			"original_md5":0,"thumbnail_md5":0,"thumbnail_saved_as":0,"original_saved_as":0,
-		}).Sort("-created").All(&data)
-		if err != nil {
-			reason = "数据库错误"
-		}
-	}
-	return data, reason
-}
-
 func (c *FileController) GetAll() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")   
@@ -98,7 +79,7 @@ func (c *FileController) GetAll() {
 
 	var data []bson.M
 	if reason == "" {
-		data, reason = allFiles(model_id, category)
+		data, reason = models.AllFiles(model_id, category)
 	}
 
 	m := map[string]interface{}{}
@@ -136,7 +117,7 @@ func (c *FileController) Ready() {
 
 	var files []bson.M
 	if reason == "" {
-		files, reason = allFiles(model_id, category)
+		files, reason = models.AllFiles(model_id, category)
 	}
 
 	if reason == "" {

@@ -33,7 +33,7 @@ func init() {
 	beego.Router("/file/get_files", &controllers.FileController{}, "get:GetAll")
 	beego.Router("/file/is_ready", &controllers.FileController{}, "get:Ready")
 	beego.Router("/file/update_description", &controllers.FileController{}, "post:Update")
-	beego.Router("/folder/get", &controllers.FolderController{}, "get:GetFolders")
+	beego.Router("/folder/init", &controllers.FolderController{}, "get:GetFolders")
 	beego.Router("/folder/rename", &controllers.FolderController{}, "get:RenameFolder")
 	beego.Router("/folder/remove", &controllers.FolderController{}, "get:RemoveFolderAndMove")
 	beego.Router("/folder/add", &controllers.FolderController{}, "get:AddFolder")
