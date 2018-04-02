@@ -79,7 +79,7 @@ func (c *FolderController) RemoveFolderAndMove() {
 	}
 
 	if reason == "" && old_id != "" && new_id != ""{
-		_, err := db.C("folder").UpdateAll(bson.M{"category": old_id},bson.M{"$set":bson.M{"category":new_id}})
+		_, err := db.C("file").UpdateAll(bson.M{"category": old_id},bson.M{"$set":bson.M{"category":new_id}})
 		if err != nil {
 			reason = "重命名失败"
 		}
