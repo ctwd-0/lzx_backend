@@ -55,7 +55,7 @@ func removeColumn(column_name, author string) string {
 				new_header[1] = append(new_header[1], header[1][idx])
 			}
 		}
-		if len(new_header) == len(header) {
+		if len(new_header[0]) == len(header[0]) {
 			reason = "不存在的列名称"
 		}
 	}
