@@ -67,7 +67,7 @@ func removeColumn(column_name, author string) string {
 	return reason
 }
 
-func addColumn(column_name, author string) string {
+func addColumn(column_name, author string) (string, string) {
 	reason := ""
 	header, _, err := models.GetDataHeaderAndSelector()
 
@@ -84,13 +84,15 @@ func addColumn(column_name, author string) string {
 		}
 	}
 
+	var column_id string
 	if reason == "" {
+		column_id = bson.NewObjectId().Hex()
 		header[0] = append(header[0], column_name)
-		header[1] = append(header[1], bson.NewObjectId().Hex())
+		header[1] = append(header[1], column_id)
 		reason = updateColumn(header, author)
 	}
 
-	return reason
+	return column_id, reason
 }
 
 func renameColumn(old_column_name, new_column_name, author string) string {
@@ -174,13 +176,14 @@ func (c *TableController) AddColumn() {
 		reason = "参数错误"
 	}
 	
+	var column_id string
 	if reason == "" {
-		reason = addColumn(column_name, author)
+		column_id, reason = addColumn(column_name, author)
 	}
 
 	if reason == "" {
-		_, err := db.C("table").UpdateAll(bson.M{column_name:bson.M{"$exists": false}},bson.M{
-			"$set":bson.M{column_name:bson.M{"value": "","author":"new_column", "modified":time.Now(), "old":[]bson.M{}}},
+		_, err := db.C("table").UpdateAll(bson.M{column_id:bson.M{"$exists": false}},bson.M{
+			"$set":bson.M{column_id:bson.M{"value": "","author":"new_column", "modified":time.Now(), "old":[]bson.M{}}},
 		})
 		if err != nil {
 			reason = "添加列失败"
