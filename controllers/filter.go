@@ -12,30 +12,27 @@ type FilterController struct {
 	beego.Controller
 }
 
-func pureHeaders() ([]string, error) {
-	hds, _, err := models.GetDataHeaderAndSelector()
-	if err != nil {
-		return []string{}, err
+func pureHeaders() ([]string, string) {
+	hds, reason := models.GetDataHeader()
+	if reason != "" {
+		return []string{}, reason
 	} else {
 		header := []string{}
-		for _, val := range hds[0] {
+		for _, val := range hds {
 			if val == "构件编号（表单中显示）" {
 				header = append(header, "构件编号")
 			} else if val != "模型编号（rhino中对应编号，表单中表头、值均不显示）" && val != "模型编号" {
 				header = append(header, val)
 			}
 		}
-		return header, nil
+		return header, ""
 	}
 }
 
 func initData() map[string]interface{} {
 	db := models.S.DB("database")
-	reason := ""
-	header, err := pureHeaders()
-	if err != nil {
-		reason = "数据库错误"
-	}
+
+	header, reason := pureHeaders()
 
 	if reason == "" {
 		count, err := db.C("filter").Find(bson.M{"deleted": false}).Count()
@@ -48,7 +45,7 @@ func initData() map[string]interface{} {
 
 	var result []bson.M
 	if reason == "" {
-		err = db.C("filter").Pipe([]bson.M{
+		err := db.C("filter").Pipe([]bson.M{
 			{"$match": bson.M{"deleted": false}},
 			{"$project": bson.M{"_id":0,"name":1,"model":1,"default":1}},
 		}).All(&result)
