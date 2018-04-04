@@ -30,8 +30,12 @@ func QueryDataIDWithMap(query map[string]interface{}) ([]bson.ObjectId, string) 
 			}
 		} else {
 			var result bson.M
+			column_id, reason := GetColumnId(query["key"].(string))
+			if reason != "" {
+				return make([]bson.ObjectId, 0), reason
+			}
 			err := db.C("table").Pipe([]bson.M{
-				{"$match":bson.M{query["key"].(string)+".value":query["val"]}},
+				{"$match":bson.M{column_id + ".value":query["val"]}},
 				{"$group":bson.M{"_id":nil, "ids":bson.M{"$push":"$_id"}}},
 			}).One(&result)
 			if err == nil {

@@ -162,3 +162,18 @@ func convertData(data []bson.M, headers [][]string) ([][]string, []string) {
 	}
 	return content, ids
 }
+
+func GetColumnId(column_name string) (string, string) {
+	columns, _, reason := GetDataHeaderAndSelector()
+
+	if reason == nil {
+		for idx, val := range columns[0] {
+			if val == column_name {
+				return columns[1][idx], ""
+			}
+		}
+		return "", "不存在的类别"
+	} else {
+		return "", "数据库错误"
+	}
+}
