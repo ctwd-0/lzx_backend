@@ -28,6 +28,8 @@ func init() {
 	beego.Router("/admin/remove_user", &controllers.AdminController{}, "get:DeleteUser")
 	beego.Router("/admin/password", &controllers.AdminController{}, "get:ChangePassword")
 	beego.Router("/admin/update", &controllers.AdminController{}, "get:UpdateUser")
+	beego.Router("/admin", &controllers.AdminController{}, "get:Admin")
+	beego.Router("/admin.html", &controllers.AdminController{}, "get:Admin")
 	beego.Router("/file/upload", &controllers.FileController{}, "post:Upload")
 	beego.Router("/file/upload", &controllers.FileController{}, "options:Options")
 	beego.Router("/file/get_files", &controllers.FileController{}, "get:GetAll")

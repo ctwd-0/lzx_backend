@@ -5,6 +5,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"lzx_backend/utils"
 	"lzx_backend/models"
+	"net/http"
 )
 
 const admin_name = "admin"
@@ -208,5 +209,13 @@ func (c *AdminController) UpdateUser() {
 	c.Data["json"] = SimpleReturn(reason)
 	if reason == "" {
 		c.Data["json"].(map[string]interface{})["users"] = users
+	}
+}
+
+func (c *AdminController) Admin() {
+	if c.GetSession("name") == admin_name {
+		http.ServeFile(c.Ctx.ResponseWriter, c.Ctx.Request, "dist/admin.html")
+	} else{
+		c.Ctx.Redirect(302, "/")
 	}
 }
