@@ -10,22 +10,12 @@ type SearchController struct {
 	beego.Controller
 }
 
-func (c *SearchController) Get() {
+func (c *SearchController) Search() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-
-	query_string := c.GetString("query")
-	//fmt.Println(query_string)
-
-	c.Data["json"] = models.QueryDataWithString(query_string)
-}
-
-func (c *SearchController) Post() {
-	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	
 	query_string := c.GetString("query")
-	//fmt.Println(query_string)
 
 	c.Data["json"] = models.QueryDataWithString(query_string)
 }

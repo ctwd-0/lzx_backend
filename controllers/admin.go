@@ -31,7 +31,6 @@ func (c *AdminController) InitUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
-	//db := models.S.DB("database")
 	reason := ""
 	
 	if c.GetSession("name") != admin_name || c.GetSession("admin") != true {
@@ -64,8 +63,10 @@ func (c *AdminController) AddUser() {
 		reason = "权限不足"
 	}
 
-	if name == "" || !utils.IsLowerMD5(pass_md5) {
-		reason = "参数错误"
+	if reason == "" {
+		if name == "" || !utils.IsLowerMD5(pass_md5) {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {
@@ -104,8 +105,10 @@ func (c *AdminController) DeleteUser() {
 		reason = "权限不足"
 	}
 
-	if name == "" || name == admin_name {
-		reason = "参数错误"
+	if reason == "" {
+		if name == "" || name == admin_name {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {
@@ -140,8 +143,14 @@ func (c *AdminController) ChangePassword() {
 	name := c.GetString("name")
 	pass_md5 := c.GetString("password")
 
-	if name == "" || !utils.IsLowerMD5(pass_md5) {
-		reason = "参数错误"
+	if c.GetSession("name") != admin_name || c.GetSession("admin") != true {
+		reason = "权限不足"
+	}
+
+	if reason == "" {
+		if name == "" || !utils.IsLowerMD5(pass_md5) {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {
@@ -169,8 +178,14 @@ func (c *AdminController) UpdateUser() {
 	banned, err_b := c.GetBool("banned")
 	write, err_w := c.GetBool("write")
 
-	if name == "" || err_b != nil || err_w != nil {
-		reason = "参数错误"
+	if c.GetSession("name") != admin_name || c.GetSession("admin") != true {
+		reason = "权限不足"
+	}
+	
+	if reason == "" {
+		if name == "" || err_b != nil || err_w != nil {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {

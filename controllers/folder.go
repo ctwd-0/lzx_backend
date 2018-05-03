@@ -31,7 +31,8 @@ func returnFolders(model_id, reason string) bson.M {
 
 func (c *FolderController) GetFolders() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	reason := ""
 	model_id := c.GetString("model_id")
 	if model_id == "" {
@@ -43,18 +44,22 @@ func (c *FolderController) GetFolders() {
 
 func (c *FolderController) RenameFolder() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	model_id := c.GetString("model_id")
 	new_folder_name := c.GetString("new")
 	old_folder_name := c.GetString("old")
-	author := "system_test"
-	if model_id == "" || new_folder_name == "" || old_folder_name == "" || old_folder_name == new_folder_name {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if model_id == "" || new_folder_name == "" || old_folder_name == "" || old_folder_name == new_folder_name {
+			reason = "参数错误"
+		}
 	}
 	
 	if reason == "" {
-		reason = renameFolder(old_folder_name, new_folder_name, model_id, author)
+		reason = renameFolder(old_folder_name, new_folder_name, model_id, author.(string))
 	}
 
 	c.Data["json"] = returnFolders(model_id, reason)
@@ -62,20 +67,24 @@ func (c *FolderController) RenameFolder() {
 
 func (c *FolderController) RemoveFolderAndMove() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
 	model_id := c.GetString("model_id")
 	new_folder_name := c.GetString("new")
 	old_folder_name := c.GetString("old")
-	author := "system_test"
-	if model_id == "" || new_folder_name == "" || old_folder_name == "" || old_folder_name == new_folder_name {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if model_id == "" || new_folder_name == "" || old_folder_name == "" || old_folder_name == new_folder_name {
+			reason = "参数错误"
+		}
 	}
 	
 	var old_id, new_id string
 	if reason == "" {
-		old_id, new_id, reason = removeFolder(old_folder_name, new_folder_name, model_id, author)
+		old_id, new_id, reason = removeFolder(old_folder_name, new_folder_name, model_id, author.(string))
 	}
 
 	if reason == "" && old_id != "" && new_id != ""{
@@ -90,17 +99,21 @@ func (c *FolderController) RemoveFolderAndMove() {
 
 func (c *FolderController) AddFolder() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	model_id := c.GetString("model_id")
 	folder_name := c.GetString("folder_name")
-	author := "system_test"
-	if model_id == "" || folder_name == "" {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+		if reason == "" {
+		if model_id == "" || folder_name == "" {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {
-		reason = addFolder(folder_name, model_id, author)
+		reason = addFolder(folder_name, model_id, author.(string))
 	}
 
 	c.Data["json"] = returnFolders(model_id, reason)

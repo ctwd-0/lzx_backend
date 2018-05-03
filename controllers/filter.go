@@ -98,7 +98,8 @@ func addFilter(name string, model []string, dft bool) error {
 
 func (c *FilterController) InitFilter() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	
 	c.Data["json"] = initData()
 }
@@ -106,12 +107,17 @@ func (c *FilterController) InitFilter() {
 func (c *FilterController) UpdateFilter() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	name := c.GetString("name")
 	model_str :=c.GetString("model")
-	if name == "" || model_str == "" {
-		reason = "参数不能为空"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+		if reason == "" {
+		if name == "" || model_str == "" {
+			reason = "参数不能为空"
+		}
 	}
 
 	var model []string
@@ -147,13 +153,17 @@ func (c *FilterController) UpdateFilter() {
 
 func (c *FilterController) DeleteFilter() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
-	reason := ""
-
 	name := c.GetString("name")
-	if name == "" {
-		reason = "参数不能为空"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if name == "" {
+			reason = "参数不能为空"
+		}
 	}
 
 	if reason == "" {
@@ -198,13 +208,18 @@ func (c *FilterController) DeleteFilter() {
 
 func (c *FilterController) AddFilter() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
-	reason := ""
 	name := c.GetString("name")
 	model_str :=c.GetString("model")
-	if name == "" || model_str == "" {
-		reason = "参数不能为空"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if name == "" || model_str == "" {
+			reason = "参数不能为空"
+		}
 	}
 
 	var model []string

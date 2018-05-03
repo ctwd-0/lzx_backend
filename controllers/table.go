@@ -14,7 +14,8 @@ type TableController struct {
 
 func (c *TableController) InitTable() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 
 	c.Data["json"] = models.GetAllData()
 }
@@ -144,11 +145,13 @@ func returnHeader(reason string) bson.M {
 
 func (c *TableController) RemoveColumn() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	column_name := c.GetString("column")
-	author := "system_test"
-	if column_name == "" {
+	author := c.GetSession("name")
+
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" && column_name == "" {
 		reason = "参数错误"
 	}
 
@@ -159,7 +162,7 @@ func (c *TableController) RemoveColumn() {
 	}
 	
 	if reason == "" {
-		reason = removeColumn(column_name, author)
+		reason = removeColumn(column_name, author.(string))
 	}
 
 	c.Data["json"] = returnHeader(reason)
@@ -168,17 +171,19 @@ func (c *TableController) RemoveColumn() {
 func (c *TableController) AddColumn() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	column_name := c.GetString("column")
-	author := "system_test"
-	if column_name == "" {
+	author := c.GetSession("name")
+
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" && column_name == "" {
 		reason = "参数错误"
 	}
 	
 	var column_id string
 	if reason == "" {
-		column_id, reason = addColumn(column_name, author)
+		column_id, reason = addColumn(column_name, author.(string))
 	}
 
 	if reason == "" {
@@ -195,13 +200,17 @@ func (c *TableController) AddColumn() {
 
 func (c *TableController) RenameColumn() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	new_column_name := c.GetString("new")
 	old_column_name := c.GetString("old")
-	author := "system_test"
-	if new_column_name == "" || old_column_name == "" || old_column_name == new_column_name {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if new_column_name == "" || old_column_name == "" || old_column_name == new_column_name {
+			reason = "参数错误"
+		}
 	}
 	
 	if reason == "" {
@@ -211,7 +220,7 @@ func (c *TableController) RenameColumn() {
 	}
 
 	if reason == "" {
-		reason = renameColumn(old_column_name, new_column_name, author)
+		reason = renameColumn(old_column_name, new_column_name, author.(string))
 	}
 
 	c.Data["json"] = returnHeader(reason)
@@ -220,16 +229,19 @@ func (c *TableController) RenameColumn() {
 func (c *TableController) UpdateValue() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	id_hex := c.GetString("id")
 	column_name := c.GetString("column")
 	value := c.GetString("value")
-	author := "system_test"
-	reason := ""
-	if column_name == "" || !bson.IsObjectIdHex(id_hex) {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if column_name == "" || !bson.IsObjectIdHex(id_hex) {
+			reason = "参数错误"
+		}
 	}
-
 	var column_id string
 	if reason == "" {
 		header, _, err := models.GetDataHeaderAndSelector()

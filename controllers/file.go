@@ -13,11 +13,16 @@ type FileController struct {
 
 func (c *FileController) Upload() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	model_id := c.GetString("model_id")
 	category := c.GetString("category")
-
-	if model_id == "" || category == "" {
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason != ""  {
+		c.Data["json"] = bson.M{"success":false, "reason": reason}
+	} else if model_id == "" || category == "" {
 		c.Data["json"] = bson.M{"success":false, "reason": "参数错误"}
 	} else {
 		file, header, _ := c.GetFile("file")
@@ -35,18 +40,22 @@ func (c *FileController) Upload() {
 func (c *FileController) Update() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-	reason := ""
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	id_hex := c.GetString("id")
 	description := c.GetString("description")
-
-	if description == "" || !bson.IsObjectIdHex(id_hex) {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if description == "" || !bson.IsObjectIdHex(id_hex) {
+			reason = "参数错误"
+		}
 	}
 
 	if reason == "" {
 		err := db.C("file").UpdateId(bson.ObjectIdHex(id_hex), bson.M{
-			"$set":bson.M{"description":description},
+			"$set":bson.M{"description":description, "author": author},
 		})
 		if err != nil {
 			reason = "数据库错误"
@@ -62,13 +71,15 @@ func (c *FileController) Update() {
 
 func (c *FileController) Options() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	c.Data["json"] = bson.M{"success":true}
 }
 
 func (c *FileController) GetAll() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")   
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	reason := ""
 	model_id := c.GetString("model_id")
 	category := c.GetString("category")
@@ -96,12 +107,14 @@ func (c *FileController) GetAll() {
 
 func (c *FileController) Ready() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")   
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
 	reason := ""
 	token := c.GetString("token")
 	model_id := c.GetString("model_id")
 	category := c.GetString("category")
+
 	if token == ""  || model_id == "" || category == "" {
 		reason = "参数错误"
 	}

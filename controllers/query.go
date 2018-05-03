@@ -12,16 +12,6 @@ type QueryController struct {
 	beego.Controller
 }
 
-// func (c *QueryController) Get() {
-// 	defer c.ServeJSON()
-// 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
-
-// 	query_string := c.GetString("query")
-// 	//fmt.Println(query_string)
-
-// 	c.Data["json"] = models.QueryDataWithString(query_string)
-// }
-
 func getNames() map[string]interface{} {
 	var result bson.M
 	db := models.S.DB("database")
@@ -42,20 +32,26 @@ func getNames() map[string]interface{} {
 
 func (c *QueryController) InitQuery() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 
 	c.Data["json"] = getNames()
 }
 
 func (c *QueryController) AddQuery() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
 	name := c.GetString("name")
 	query := c.GetString("query")
-	reason := ""
-	if name == "" || query == "" {
-		reason = "参数错误"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if name == "" || query == "" {
+			reason = "参数错误"
+		}
 	}
 	var query_map interface{}
 	err := json.Unmarshal([]byte(query), &query_map)
@@ -73,7 +69,7 @@ func (c *QueryController) AddQuery() {
 	}
 
 	if reason == "" {
-		err := db.C("query").Insert(bson.M{"name":name, "query": query, "deleted": false})
+		err := db.C("query").Insert(bson.M{"name":name, "author":author, "query": query, "deleted": false})
 		if err != nil {
 			reason = "数据库错误"
 		}
@@ -95,7 +91,8 @@ func (c *QueryController) AddQuery() {
 
 func (c *QueryController) GetQuery() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
 	reason := ""
 	name := c.GetString("name")
@@ -125,12 +122,17 @@ func (c *QueryController) GetQuery() {
 
 func (c *QueryController) DeleteQuery() {
 	defer c.ServeJSON()
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	db := models.S.DB("database")
-	reason := ""
 	name := c.GetString("name")
-	if name == "" {
-		reason = "名称不能为空"
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if name == "" {
+			reason = "名称不能为空"
+		}
 	}
 
 	if reason == "" {

@@ -121,7 +121,25 @@ func (c *UserController) Login() {
 }
 
 func (c *UserController) Logout() {
+	defer c.ServeJSON()
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+
 	c.DelSession("name")
 	c.DelSession("write")
 	c.DelSession("admin")
+
+	c.Data["json"] = bson.M{
+		"success": true,
+	}
+}
+
+func CheckWrite(write, author interface{}) string {
+	if write == nil || author == nil {
+		return "未登陆无法操作。"
+	} else if write.(bool) == false {
+		return "无写权限无法操作。"
+	} else { 
+		return ""
+	}
 }
