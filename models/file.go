@@ -212,11 +212,17 @@ func ProcessPdf(file multipart.File, filename string, model_id string, category 
 		tm := thu.Bounds().Max
 		m, reason = makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "pdf", uuid.String(), tm.X, tm.Y, tm.X, tm.Y)
 	}
+	
+	c := S.DB("database").C("file")
 	if reason == "" {
-		c := S.DB("database").C("file")
 		delete(m, "original_width")
 		delete(m, "original_height")
 		c.Insert(m)
+	} else {
+		c.Insert(bson.M{
+			"uuid": uuid.String(),
+			"reason": reason,
+		})
 	}
 }
 
@@ -278,15 +284,19 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 
 	var m bson.M
 	if reason == "" {
-
 		tm := thu.Bounds().Max
 		om := ori.Bounds().Max
 		m, reason = makeFileDocHelper("/dist/uploads/", model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, "image", uuid.String(), om.X, om.Y, tm.X, tm.Y)
-
 	}
+	
+	c :=  S.DB("database").C("file")
 	if reason == "" {
-		c :=  S.DB("database").C("file")
 		c.Insert(m)
+	} else {
+		c.Insert(bson.M{
+			"uuid": uuid.String(),
+			"reason": reason,
+		})
 	}
 }
 
@@ -299,7 +309,7 @@ func AllFiles(model_id, category string) ([]bson.M, string){
 		err := db.C("file").Find(bson.M{
 			"model_id": model_id, "category": category_id, "deleted": false,
 		}).Select(bson.M{
-			"deleted":0,"created":0,"uuid":0,
+			"deleted":0,"uuid":0,
 			"original_md5":0,"thumbnail_md5":0,"thumbnail_saved_as":0,"original_saved_as":0,
 		}).Sort("-created").All(&data)
 		if err != nil {

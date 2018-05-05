@@ -24,9 +24,9 @@ func TransparentStatic(ctx *context.Context) {
 	static_path := ""
 	if path == "/" {
 		static_path = "dist/index.html"
-	} else if path == "/index" || path == "/index.html" {
+	} else if path == "/index" || path == "index" || path == "/index.html" {
 		static_path = "dist/index.html"
-	} else if path == "/viewer" || path == "/viewer.html" {
+	} else if path == "/viewer" || path == "viewer" || path == "/viewer.html" {
 		static_path = "dist/viewer.html"
 	}
 	if static_path != "" {

@@ -62,11 +62,7 @@ func (c *FileController) Update() {
 		}
 	}
 
-	if reason == "" {
-		c.Data["json"] = bson.M{"success":true}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason": "参数错误"}
-	}
+	c.Data["json"] = SimpleReturn(reason)
 }
 
 func (c *FileController) Options() {
@@ -74,6 +70,75 @@ func (c *FileController) Options() {
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
 	c.Data["json"] = bson.M{"success":true}
+}
+
+func (c *FileController) Remove() {
+	defer c.ServeJSON()
+	db := models.S.DB("database")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	id_hex := c.GetString("id")
+	author := c.GetSession("name")
+	
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if !bson.IsObjectIdHex(id_hex) {
+			reason = "参数错误"
+		}
+	}
+
+	if reason == "" {
+		err := db.C("file").UpdateId(bson.ObjectIdHex(id_hex), bson.M{
+			"$set":bson.M{"deleted":true, "deleted_by": author},
+		})
+		if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	c.Data["json"] = SimpleReturn(reason)
+}
+
+func (c *FileController) Download() {
+	db := models.S.DB("database")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+	id_hex := c.GetString("id")
+	author := c.GetSession("name")
+
+	reason := CheckWrite(c.GetSession("write"), author)
+	if reason == "" {
+		if !bson.IsObjectIdHex(id_hex) {
+			reason = "参数错误"
+		}
+	}
+
+	var data bson.M
+	if reason == "" {
+		err := db.C("file").FindId(bson.ObjectIdHex(id_hex)).One(&data)
+		if err != nil {
+			reason = "数据库错误"
+		}
+	}
+
+	if reason == "" {
+		path := data["original_path"].(string)
+		name := data["original_name"].(string)
+		if path[0] == '/' {
+			path = path[1:]
+		}
+		c.Ctx.Output.Download(path, name)
+	} else {
+		writer := c.Ctx.ResponseWriter
+		writer.Header().Set("Content-Disposition", "attachment; filename=" + reason + ".txt")
+		writer.Header().Set("Content-Description", "File Transfer")
+		writer.Header().Set("Content-Type", "application/octet-stream")
+		writer.Header().Set("Content-Transfer-Encoding", "binary")
+		writer.Header().Set("Expires", "0")
+		writer.Header().Set("Cache-Control", "must-revalidate")
+		writer.Header().Set("Pragma", "public")
+		c.Ctx.ResponseWriter.Write([]byte(reason))
+	}
 }
 
 func (c *FileController) GetAll() {
@@ -88,21 +153,15 @@ func (c *FileController) GetAll() {
 		reason = "参数错误"
 	}
 
-	var data []bson.M
+	var files []bson.M
 	if reason == "" {
-		data, reason = models.AllFiles(model_id, category)
+		files, reason = models.AllFiles(model_id, category)
 	}
 
-	m := map[string]interface{}{}
+	c.Data["json"] = SimpleReturn(reason)
 	if reason == "" {
-		m["success"] = true
-		m["files"] = data
-	} else {
-		m["success"] = false
-		m["reason"] = reason
+		c.Data["json"].(map[string]interface{})["files"] = files
 	}
-
-	c.Data["json"] = m
 }
 
 func (c *FileController) Ready() {
@@ -119,11 +178,10 @@ func (c *FileController) Ready() {
 		reason = "参数错误"
 	}
 
+	var data bson.M
 	if reason == "" {
-		count, err := db.C("file").Find(bson.M{"uuid":token}).Count()
-		if err != nil {
-			reason = "数据库错误"
-		} else if count == 0 {
+		err := db.C("file").Find(bson.M{"uuid":token}).One(&data)
+		if err != nil || data == nil {
 			reason = "尚未准备好"
 		}
 	}
@@ -133,9 +191,12 @@ func (c *FileController) Ready() {
 		files, reason = models.AllFiles(model_id, category)
 	}
 
+	c.Data["json"] = SimpleReturn(reason)
 	if reason == "" {
-		c.Data["json"] = bson.M{"success":true, "files": files}
-	} else {
-		c.Data["json"] = bson.M{"success":false, "reason": reason}
+		c.Data["json"].(map[string]interface{})["files"] = files
+		if data["reason"] != nil {
+			c.Data["json"].(map[string]interface{})["finish_with_error"] = true
+			c.Data["json"].(map[string]interface{})["finish_with_error_reason"] = data["reason"]
+		}
 	}
 }
