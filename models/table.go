@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+//初始化数据表
 func InitDbTable(path string) {
 	db := S.DB("database")
 	reason := ""
@@ -65,6 +66,7 @@ func InitDbTable(path string) {
 	fmt.Println("reason:", reason)
 }
 
+//获取指定id对应的数据
 func GetDataWithIDs(ids []bson.ObjectId) map[string]interface{} {
 	db := S.DB("database")
 	header, selector, err := GetDataHeaderAndSelector()
@@ -85,6 +87,7 @@ func GetDataWithIDs(ids []bson.ObjectId) map[string]interface{} {
 	return m
 }
 
+//获取数据表头
 func GetDataHeader() ([]string, string) {
 	db := S.DB("database")
 	var header bson.M
@@ -101,6 +104,7 @@ func GetDataHeader() ([]string, string) {
 	}
 }
 
+//获取数据表头，以及检索数据所需的selector。
 func GetDataHeaderAndSelector() ([][]string, bson.M, error) {
 	db := S.DB("database")
 	var header bson.M
@@ -123,6 +127,7 @@ func GetDataHeaderAndSelector() ([][]string, bson.M, error) {
 	}
 }
 
+//获取数据表中的所有数据
 func GetAllData() map[string]interface{} {
 	db := S.DB("database")
 	header, selector, err := GetDataHeaderAndSelector()
@@ -145,6 +150,7 @@ func GetAllData() map[string]interface{} {
 	return m
 }
 
+//将数据库中保存的数据转换为前端需要的格式。
 func convertData(data []bson.M, headers [][]string) ([][]string, []string) {
 	content := make([][]string, len(data))
 	ids := make([]string, len(data))
@@ -163,6 +169,7 @@ func convertData(data []bson.M, headers [][]string) ([][]string, []string) {
 	return content, ids
 }
 
+//将数据表列的名称转换为其对应的id
 func GetColumnId(column_name string) (string, string) {
 	columns, _, reason := GetDataHeaderAndSelector()
 

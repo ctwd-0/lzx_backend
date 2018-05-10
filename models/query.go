@@ -6,6 +6,7 @@ import (
 	"lzx_backend/utils"
 )
 
+//将interface数组转换为id数组
 func open_array(vals []interface{}) []bson.ObjectId{
 	result := make([]bson.ObjectId, 0)
 	for _, val := range vals {
@@ -14,6 +15,7 @@ func open_array(vals []interface{}) []bson.ObjectId{
 	return result
 }
 
+//递归实现检索。返回的是检索结果对应的id
 func QueryDataIDWithMap(query map[string]interface{}) ([]bson.ObjectId, string) {
 	db := S.DB("database")
 	if query["key"] != nil && query["val"] != nil && query["op"] == nil && query["exps"] == nil {
@@ -78,6 +80,7 @@ func QueryDataIDWithMap(query map[string]interface{}) ([]bson.ObjectId, string) 
 	}
 }
 
+//将query从json string解析为map，并进行检索
 func QueryDataWithString(query string) map[string]interface{} {
 	if(query == "") {
 		m := GetAllData()
@@ -97,6 +100,7 @@ func QueryDataWithString(query string) map[string]interface{} {
 	return QueryDataWithMap(query_map)
 }
 
+//递归实现检索。
 func QueryDataWithMap(query map[string]interface{}) map[string]interface{} {
 	ids, err := QueryDataIDWithMap(query)
 	if err == "" {

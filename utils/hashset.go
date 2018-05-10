@@ -1,5 +1,6 @@
 package utils
 
+// 利用 map[string]interface{} 类型实现hashset
 import (
 	"bytes"
 	"fmt"

@@ -14,6 +14,8 @@ import (
 	"mime/multipart"
 )
 
+//将file对应的文件，按照l_ext制定的格式解析为图片，并生成缩略图。
+//返回原图，缩略图，以及错误信息。
 func ThumbnailFile(file multipart.File, l_ext string) (image.Image, image.Image, string) {
 	var ori_image image.Image
 	var err error
@@ -37,6 +39,7 @@ func ThumbnailFile(file multipart.File, l_ext string) (image.Image, image.Image,
 	return ori_image, thumbnail, reason
 }
 
+// 将path对应的文件进行缩略图操作。返回包含所有信息的map和错误信息
 func Thumbnail(path string) (map[string]interface{}, string) {
 	reason := ""
 	m := map[string]interface{}{}
@@ -97,6 +100,7 @@ func Thumbnail(path string) (map[string]interface{}, string) {
 	return m, reason
 }
 
+//返回path对应文件的md5
 func FileMD5(path string) string {
 	file, _ := os.Open(path)
 	defer file.Close()
@@ -104,11 +108,13 @@ func FileMD5(path string) string {
 	return fmt.Sprintf("%x",md5.Sum(body))
 }
 
+//返回file对应文件的md5
 func FileMD5File(file multipart.File) string {
 	body, _ := ioutil.ReadAll(file)
 	return fmt.Sprintf("%x",md5.Sum(body))
 }
 
+//将srcName对应的文件拷贝到dstName对应的位置
 func CopyFile(srcName, dstName string) (written int64, err error) {
     src, err := os.Open(srcName)
     if err != nil {

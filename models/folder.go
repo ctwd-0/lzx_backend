@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//向数据库添加新的文件夹
 func insertFolder(model_id string, folders []string) string {
 	db := S.DB("database")
 	data := []bson.M{}
@@ -27,6 +28,8 @@ func insertFolder(model_id string, folders []string) string {
 	}
 }
 
+//获取指定构件对应的文件夹信息。
+//两维数组分别为文件夹名对应的随机id，和文件夹名
 func GetFolders(model_id string) ([][]string, string) {
 	db := S.DB("database")
 
@@ -51,6 +54,7 @@ func GetFolders(model_id string) ([][]string, string) {
 	}
 }
 
+//将指定构件的指定文件夹名转换为对应的id
 func ConvertName(model_id, folder_name string) (string, string) {
 	folders, reason := GetFolders(model_id)
 

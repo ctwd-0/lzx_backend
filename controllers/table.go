@@ -12,6 +12,8 @@ type TableController struct {
 	beego.Controller
 }
 
+
+//初始化，返回数据表内容。
 func (c *TableController) InitTable() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -20,6 +22,7 @@ func (c *TableController) InitTable() {
 	c.Data["json"] = models.GetAllData()
 }
 
+//数据操作，更新列名
 func updateColumn(new_header [][]string, author string) string {
 	db := models.S.DB("database")
 	data := utils.StringToData(new_header)
@@ -37,6 +40,7 @@ func updateColumn(new_header [][]string, author string) string {
 	return ""
 }
 
+//数据操作，删除列
 func removeColumn(column_name, author string) string {
 	reason := ""
 	header, _, err := models.GetDataHeaderAndSelector()
@@ -68,6 +72,7 @@ func removeColumn(column_name, author string) string {
 	return reason
 }
 
+//数据操作，增加列
 func addColumn(column_name, author string) (string, string) {
 	reason := ""
 	header, _, err := models.GetDataHeaderAndSelector()
@@ -96,6 +101,7 @@ func addColumn(column_name, author string) (string, string) {
 	return column_id, reason
 }
 
+//数据操作，重命名列
 func renameColumn(old_column_name, new_column_name, author string) string {
 	reason := ""
 	header, _, err := models.GetDataHeaderAndSelector()
@@ -130,6 +136,7 @@ func renameColumn(old_column_name, new_column_name, author string) string {
 	return reason
 }
 
+//生成返回数据。包含数据表的表头
 func returnHeader(reason string) bson.M {
 	header := []string{}
 	if reason == "" {
@@ -143,6 +150,7 @@ func returnHeader(reason string) bson.M {
 	}
 }
 
+//删除列名
 func (c *TableController) RemoveColumn() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -168,6 +176,7 @@ func (c *TableController) RemoveColumn() {
 	c.Data["json"] = returnHeader(reason)
 }
 
+//增加列名
 func (c *TableController) AddColumn() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
@@ -198,6 +207,7 @@ func (c *TableController) AddColumn() {
 	c.Data["json"] = returnHeader(reason)
 }
 
+//重命名列
 func (c *TableController) RenameColumn() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -226,6 +236,7 @@ func (c *TableController) RenameColumn() {
 	c.Data["json"] = returnHeader(reason)
 }
 
+//更新表中数值
 func (c *TableController) UpdateValue() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")

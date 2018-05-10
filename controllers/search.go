@@ -10,6 +10,8 @@ type SearchController struct {
 	beego.Controller
 }
 
+
+//按照指定的检索条件检索构件
 func (c *SearchController) Search() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")

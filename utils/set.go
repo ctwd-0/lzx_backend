@@ -4,6 +4,8 @@ import(
 	"gopkg.in/mgo.v2/bson"
 )
 
+// 定义set接口，并实现set上的一些操作。
+
 type Set interface {
 	Add(e interface{}) bool
 	Remove(e interface{})

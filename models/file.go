@@ -18,9 +18,14 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
+//设置文件保存的位置
 const preprocess_dest_dir = "E:/20170109/building_viewer/dist/files/"
 const upload_dest_dir = "E:/20170109/building_viewer/dist/uploads/"
 
+// const preprocess_dest_dir = "C:/go/dist/files/"
+// const upload_dest_dir = "C:/go/dist/uploads/"
+
+//初始化文件。path对应保存文件的路径
 func InitDbFile(path string) {
 	groups, _ := ioutil.ReadDir(path)
 	db := S.DB("database")
@@ -69,6 +74,9 @@ func InitDbFile(path string) {
 	}
 }
 
+//保存文件辅助函数。
+//输入文件内容，缩略图内容，扩展名等信息
+//返回保存文件的结果等信息
 func saveFileHelper(ori_content, thu_content []byte, ext, thu_ext string) (ori_md5, thu_md5, ori_saved_as, thu_saved_as, reason string) {
 	reason = ""
 
@@ -105,6 +113,7 @@ func saveFileHelper(ori_content, thu_content []byte, ext, thu_ext string) (ori_m
 	return
 }
 
+//将文件信息构件为map并返回
 func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_as, thu_saved_as, filename, type_name, uuid string, ox, oy, tx, ty int) (bson.M, string) {
 	category_id, reason := ConvertName(model_id, category)
 	return bson.M{
@@ -129,6 +138,7 @@ func makeFileDocHelper(prefix, model_id, category, ori_md5, thu_md5, ori_saved_a
 	}, reason
 }
 
+//处理上传的pdf文件。
 func ProcessPdf(file multipart.File, filename string, model_id string, category string, uuid uuid.UUID) {
 	name_parts := strings.Split(filename, ".")
 	ext := name_parts[len(name_parts) - 1]
@@ -226,6 +236,7 @@ func ProcessPdf(file multipart.File, filename string, model_id string, category 
 	}
 }
 
+//处理上传的文件。直接处理图片，调用ProcessPdf处理pdf文件。
 func ProcessUploadedFile(file multipart.File, filename string, model_id string, category string, uuid uuid.UUID) {
 	name_parts := strings.Split(filename, ".")
 	ext := name_parts[len(name_parts) - 1]
@@ -300,6 +311,7 @@ func ProcessUploadedFile(file multipart.File, filename string, model_id string, 
 	}
 }
 
+//获取指定构件，指定类别的的所有文件。
 func AllFiles(model_id, category string) ([]bson.M, string){
 	db := S.DB("database")
 	category_id, reason := ConvertName(model_id, category)

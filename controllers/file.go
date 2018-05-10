@@ -11,6 +11,7 @@ type FileController struct {
 	beego.Controller
 }
 
+//上传文件
 func (c *FileController) Upload() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -37,6 +38,7 @@ func (c *FileController) Upload() {
 	}
 }
 
+//更新文件描述
 func (c *FileController) Update() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
@@ -72,6 +74,7 @@ func (c *FileController) Options() {
 	c.Data["json"] = bson.M{"success":true}
 }
 
+//删除文件
 func (c *FileController) Remove() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
@@ -99,6 +102,7 @@ func (c *FileController) Remove() {
 	c.Data["json"] = SimpleReturn(reason)
 }
 
+//下载文件
 func (c *FileController) Download() {
 	db := models.S.DB("database")
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -141,6 +145,7 @@ func (c *FileController) Download() {
 	}
 }
 
+//获取某个构件某个文件夹下的所有文件
 func (c *FileController) GetAll() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -164,6 +169,7 @@ func (c *FileController) GetAll() {
 	}
 }
 
+//测试某个上传的文件是否已已经就绪
 func (c *FileController) Ready() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")

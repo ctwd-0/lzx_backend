@@ -12,6 +12,7 @@ type UserController struct {
 	beego.Controller
 }
 
+//返回用户存在的原因
 func userNotExist(name string) string {
 	db := models.S.DB("database")
 	count, err := db.C("user").Find(bson.M{"name":name, "deleted": false}).Count()
@@ -23,6 +24,7 @@ func userNotExist(name string) string {
 	return ""
 }
 
+//返回用户不存在的原因
 func userExist(name string) string {
 	db := models.S.DB("database")
 	count, err := db.C("user").Find(bson.M{"name":name, "deleted": false}).Count()
@@ -34,6 +36,7 @@ func userExist(name string) string {
 	return ""
 }
 
+//当只需返回操作是否成功时，使用该函数构造返回值
 func SimpleReturn(reason string) map[string]interface{} {
 	m := map[string]interface{}{}
 	if reason == "" {
@@ -45,6 +48,7 @@ func SimpleReturn(reason string) map[string]interface{} {
 	return m
 }
 
+//使用旧密码重设密码。未使用。
 func (c *UserController) ChangePassword() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
@@ -81,6 +85,7 @@ func (c *UserController) ChangePassword() {
 	c.Data["json"] = SimpleReturn(reason)
 }
 
+//用户登陆，设置session
 func (c *UserController) Login() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -120,6 +125,7 @@ func (c *UserController) Login() {
 	c.Data["json"] = SimpleReturn(reason)
 }
 
+//用户登出
 func (c *UserController) Logout() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -134,6 +140,7 @@ func (c *UserController) Logout() {
 	}
 }
 
+//检查用户是否有写权限
 func CheckWrite(write, author interface{}) string {
 	if write == nil || author == nil {
 		return "未登陆无法操作。"

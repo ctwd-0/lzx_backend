@@ -12,6 +12,7 @@ type FolderController struct {
 	beego.Controller
 }
 
+//辅助函数，生成响应内容，并包含文件夹信息和第一个文件夹的内容
 func returnFolders(model_id, reason string) bson.M {
 	var folders [][]string
 	if reason == "" {
@@ -29,6 +30,7 @@ func returnFolders(model_id, reason string) bson.M {
 	}
 }
 
+//获取初始文件夹信息
 func (c *FolderController) GetFolders() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -42,6 +44,7 @@ func (c *FolderController) GetFolders() {
 	c.Data["json"] = returnFolders(model_id, reason)
 }
 
+//重命名文件夹
 func (c *FolderController) RenameFolder() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -65,6 +68,7 @@ func (c *FolderController) RenameFolder() {
 	c.Data["json"] = returnFolders(model_id, reason)
 }
 
+//删除文件夹，并将文件夹的内容移动到另外一个文件夹中
 func (c *FolderController) RemoveFolderAndMove() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -97,6 +101,7 @@ func (c *FolderController) RemoveFolderAndMove() {
 	c.Data["json"] = returnFolders(model_id, reason)
 }
 
+//增加新的文件夹
 func (c *FolderController) AddFolder() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -119,6 +124,7 @@ func (c *FolderController) AddFolder() {
 	c.Data["json"] = returnFolders(model_id, reason)
 }
 
+//增加文件夹，数据操作
 func addFolder(folder_name, model_id, author string) string {
 	folder, reason := models.GetFolders(model_id)
 	if reason == "" {
@@ -139,6 +145,7 @@ func addFolder(folder_name, model_id, author string) string {
 	return reason
 }
 
+//删除文件夹，数据操作
 func removeFolder(old_folder_name, new_folder_name, model_id, author string) (string, string, string) {
 	var old_id, new_id string
 	folder, reason := models.GetFolders(model_id)
@@ -170,6 +177,7 @@ func removeFolder(old_folder_name, new_folder_name, model_id, author string) (st
 	}
 }
 
+//重命名文件夹，数据操作
 func renameFolder(old_folder_name, new_folder_name, model_id, author string) string {
 	folder, reason := models.GetFolders(model_id)
 
@@ -201,6 +209,7 @@ func renameFolder(old_folder_name, new_folder_name, model_id, author string) str
 	return reason
 }
 
+//更新文件夹，数据操作
 func updateFolder(new_folder [][]string, model_id, author string) string {
 	db := models.S.DB("database")
 

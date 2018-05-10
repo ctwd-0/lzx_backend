@@ -12,6 +12,7 @@ type QueryController struct {
 	beego.Controller
 }
 
+//获取所有保存的检索条件的名称
 func getNames() map[string]interface{} {
 	var result bson.M
 	db := models.S.DB("database")
@@ -30,6 +31,7 @@ func getNames() map[string]interface{} {
 	return m
 }
 
+//初始化，返回所有检索条件的名称
 func (c *QueryController) InitQuery() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -38,6 +40,7 @@ func (c *QueryController) InitQuery() {
 	c.Data["json"] = getNames()
 }
 
+//增加检索条件
 func (c *QueryController) AddQuery() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -89,6 +92,7 @@ func (c *QueryController) AddQuery() {
 	}
 }
 
+//获取检索条件的内容
 func (c *QueryController) GetQuery() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -120,6 +124,7 @@ func (c *QueryController) GetQuery() {
 	c.Data["json"] = m
 }
 
+//删除检索条件
 func (c *QueryController) DeleteQuery() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")

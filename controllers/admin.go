@@ -14,6 +14,7 @@ type AdminController struct {
 	beego.Controller
 }
 
+//管理员获取所有的用户
 func allUsers() ([]bson.M, string) {
 	db := models.S.DB("database")
 	var users []bson.M
@@ -28,6 +29,7 @@ func allUsers() ([]bson.M, string) {
 	}
 }
 
+//管理员获取所有的用户。
 func (c *AdminController) InitUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -51,6 +53,7 @@ func (c *AdminController) InitUser() {
 	c.Data["json"] = m
 }
 
+//管理员增加用户
 func (c *AdminController) AddUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -94,6 +97,7 @@ func (c *AdminController) AddUser() {
 	}
 }
 
+//管理员删除用户
 func (c *AdminController) DeleteUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -135,6 +139,7 @@ func (c *AdminController) DeleteUser() {
 	}
 }
 
+//管理员重置密码
 func (c *AdminController) ChangePassword() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -169,6 +174,7 @@ func (c *AdminController) ChangePassword() {
 	c.Data["json"] = SimpleReturn(reason)
 }
 
+//管理员更新用户信息
 func (c *AdminController) UpdateUser() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -212,6 +218,7 @@ func (c *AdminController) UpdateUser() {
 	}
 }
 
+//管理员页面
 func (c *AdminController) Admin() {
 	if c.GetSession("name") == admin_name {
 		http.ServeFile(c.Ctx.ResponseWriter, c.Ctx.Request, "dist/admin.html")

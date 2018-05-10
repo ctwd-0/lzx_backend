@@ -12,6 +12,7 @@ type FilterController struct {
 	beego.Controller
 }
 
+//获取表头数组
 func pureHeaders() ([]string, string) {
 	hds, reason := models.GetDataHeader()
 	if reason != "" {
@@ -29,6 +30,7 @@ func pureHeaders() ([]string, string) {
 	}
 }
 
+//获取初始化数据表内容。即所有数据。
 func initData() map[string]interface{} {
 	db := models.S.DB("database")
 
@@ -66,6 +68,7 @@ func initData() map[string]interface{} {
 	return m
 }
 
+//将json格式的数据转换为数组格式
 func getStringArray(input string) ([]string, string){
 	reason := ""
 	var output_i interface{}
@@ -91,11 +94,13 @@ func getStringArray(input string) ([]string, string){
 	return output, reason
 }
 
+//添加表头过滤器
 func addFilter(name string, model []string, dft bool) error {
 	db := models.S.DB("database")
 	return db.C("filter").Insert(bson.M{"name":name, "model": model, "default":dft, "deleted": false})
 }
 
+//初始化返回所有的表头过滤器
 func (c *FilterController) InitFilter() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -104,6 +109,7 @@ func (c *FilterController) InitFilter() {
 	c.Data["json"] = initData()
 }
 
+//更新表头过滤器
 func (c *FilterController) UpdateFilter() {
 	defer c.ServeJSON()
 	db := models.S.DB("database")
@@ -151,6 +157,7 @@ func (c *FilterController) UpdateFilter() {
 	c.Data["json"] = m
 }
 
+//删除表头过滤器
 func (c *FilterController) DeleteFilter() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -206,6 +213,7 @@ func (c *FilterController) DeleteFilter() {
 	c.Data["json"] = m
 }
 
+//增加表头过滤器
 func (c *FilterController) AddFilter() {
 	defer c.ServeJSON()
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
