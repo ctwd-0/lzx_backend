@@ -33,7 +33,7 @@ func ThumbnailFile(file multipart.File, l_ext string) (image.Image, image.Image,
 
 	var thumbnail image.Image
 	if reason == "" {
-		thumbnail = resize.Thumbnail(1280, 720, ori_image, resize.Lanczos3)
+		thumbnail = resize.Thumbnail(1280, 720, ori_image, resize.NearestNeighbor)
 	}
 
 	return ori_image, thumbnail, reason
