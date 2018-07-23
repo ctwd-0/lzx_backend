@@ -19,11 +19,14 @@ import (
 )
 
 //设置文件保存的位置
-const preprocess_dest_dir = "E:/20170109/building_viewer/dist/files/"
-const upload_dest_dir = "E:/20170109/building_viewer/dist/uploads/"
+// const preprocess_dest_dir = "E:/20170109/building_viewer/dist/files/"
+// const upload_dest_dir = "E:/20170109/building_viewer/dist/uploads/"
 
 // const preprocess_dest_dir = "C:/go/dist/files/"
 // const upload_dest_dir = "C:/go/dist/uploads/"
+
+const preprocess_dest_dir = "./dist/files/"
+const upload_dest_dir = "./dist/uploads/"
 
 //初始化文件。path对应保存文件的路径
 func InitDbFile(path string) {
