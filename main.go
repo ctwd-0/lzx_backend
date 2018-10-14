@@ -19,7 +19,7 @@ func main() {
 	//models.InitDbFile("E:/images")
 	
 	//初始化数据表并建立数据库内容
-	//models.InitDbTable("E:/20170109/数据表.csv")
+	//models.InitDbTable("C:/data.csv")
 
 	//设置静态文件夹，并对部分请求设置转发
 	beego.BConfig.WebConfig.StaticDir["/dist"] = "dist"
